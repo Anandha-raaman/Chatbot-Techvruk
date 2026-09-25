@@ -1,0 +1,44 @@
+[
+  {
+    "id": "KB-001",
+    "title": "Standard 30-Day Return & Refund Policy",
+    "category": "returns",
+    "content": "Customers can initiate a return within 30 calendar days of delivery for all standard retail items. The item must be in its original packaging, unopened, or gently inspected with all accessories included. Once the returned item is received and inspected at our warehouse, a full refund to the original payment method will be credited within 3-5 business days. Return shipping fees are free for defective items and $4.99 for remorse returns.",
+    "keywords": ["return", "refund", "30 days", "money back", "return policy", "original packaging"]
+  },
+  {
+    "id": "KB-002",
+    "title": "Damaged or Defective Goods Policy",
+    "category": "damages",
+    "content": "If an item arrives damaged, defective, or missing components, customers must report the issue within 48 hours of carrier delivery confirmation. The customer is entitled to an immediate replacement at zero additional cost, or a full refund including original shipping fees. Photo evidence of external packaging and product damage may be requested.",
+    "keywords": ["damaged", "broken", "defective", "missing parts", "arrived broken", "shattered", "replacement"]
+  },
+  {
+    "id": "KB-003",
+    "title": "Non-Returnable & Final Sale Items",
+    "category": "returns",
+    "content": "The following items are strictly non-returnable and non-refundable unless they arrive damaged: 1) Digital downloadable software and gift cards, 2) Personalized or customized engraved merchandise, 3) Intimate apparel and personal hygiene products once the hygienic seal is broken, 4) Perishable goods.",
+    "keywords": ["non-returnable", "gift card", "digital code", "customized", "hygiene", "final sale"]
+  },
+  {
+    "id": "KB-004",
+    "title": "Shipping Delays, Lost In Transit & Stolen Packages",
+    "category": "shipping",
+    "content": "Domestic standard orders typically deliver within 3-5 business days. If tracking shows no movement for more than 4 consecutive business days, the shipment is classified as 'Stalled'. If tracking indicates 'Delivered' but the package is not found, we require a 24-hour buffer window before opening a carrier trace. If lost after trace confirmation, an automatic full refund or express reshipment is provided.",
+    "keywords": ["shipping delay", "lost package", "tracking", "delivery delayed", "stolen package", "carrier trace"]
+  },
+  {
+    "id": "KB-005",
+    "title": "Order Cancellation Policy",
+    "category": "cancellations",
+    "content": "Orders can be canceled autonomously by the customer or support agent within 60 minutes of order placement if the status is 'Processing' or 'Payment Pending'. Once an order transitions to 'Fulfillment / Shipped', it cannot be recalled and must follow the standard return procedure after delivery.",
+    "keywords": ["cancel order", "cancellation", "stop delivery", "wrong address", "recall"]
+  },
+  {
+    "id": "KB-006",
+    "title": "Human Support Escalation Protocol (Tier-2)",
+    "category": "escalations",
+    "content": "An inquiry must be escalated immediately to a Tier-2 Human Support Specialist if: 1) The customer exhibits severe frustration, distress, or threatens legal/regulatory action, 2) The order value exceeds $500 and involves disputed delivery or unauthorized charges, 3) The automated refund policy denies a request but valid extenuating circumstances are claimed (medical emergency, prolonged courier failure), 4) Recurrent defects on the same product SKU. Target human response SLA is within 15 minutes during business hours.",
+    "keywords": ["escalate", "human agent", "talk to human", "supervisor", "manager", "dispute", "lawyer", "fraud"]
+  }
+]

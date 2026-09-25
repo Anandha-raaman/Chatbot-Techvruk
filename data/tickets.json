@@ -1,0 +1,68 @@
+[
+  {
+    "ticket_id": "TCK-20260925-2D3721",
+    "type": "STANDARD_SUPPORT_TICKET",
+    "customer_name": "Sarah Jenkins",
+    "email": "sarah.j@example.com",
+    "category": "Refund",
+    "description": "I bought order ORD-89421 and need a full refund because the item is defective.",
+    "resolution_status": "Resolved Autonomously",
+    "created_at": "2026-09-25T21:20:50.253165"
+  },
+  {
+    "ticket_id": "ESC-20260925-0C1BD7",
+    "type": "HUMAN_ESCALATION_TIER2",
+    "customer_name": "Elena Rostova",
+    "email": "elena.rostova@example.com",
+    "urgency": "CRITICAL",
+    "sentiment": "ANGRY",
+    "summary": "Customer: Elena Rostova (elena.rostova@example.com)\nOrder: ORD-90214\nUser Query: This is UNACCEPTABLE and FRAUD! My order ORD-90214 was $649 and you lost it! Escalate to a human manager immediately or I contact my lawyer!\nFindings: Order Status=In Transit - Delayed. Eligibility=N/A.",
+    "assigned_queue": "Priority Incident Resolution Team",
+    "sla_target_minutes": 10,
+    "created_at": "2026-09-25T21:20:50.266865",
+    "status": "Assigned to Human Specialist"
+  },
+  {
+    "ticket_id": "TCK-20260925-73634A",
+    "type": "STANDARD_SUPPORT_TICKET",
+    "customer_name": "Elena Rostova",
+    "email": "elena.rostova@example.com",
+    "category": "Escalation",
+    "description": "This is UNACCEPTABLE and FRAUD! My order ORD-90214 was $649 and you lost it! Escalate to a human manager immediately or I contact my lawyer!",
+    "resolution_status": "Escalated to Human",
+    "created_at": "2026-09-25T21:20:50.283408"
+  },
+  {
+    "ticket_id": "TCK-20260925-A46CF6",
+    "type": "STANDARD_SUPPORT_TICKET",
+    "customer_name": "Sarah Jenkins",
+    "email": "sarah.j@example.com",
+    "category": "Refund",
+    "description": "I bought order ORD-89421 and need a full refund because the item is defective.",
+    "resolution_status": "Resolved Autonomously",
+    "created_at": "2026-09-25T21:22:44.523767"
+  },
+  {
+    "ticket_id": "ESC-20260925-F44D72",
+    "type": "HUMAN_ESCALATION_TIER2",
+    "customer_name": "Elena Rostova",
+    "email": "elena.rostova@example.com",
+    "urgency": "CRITICAL",
+    "sentiment": "ANGRY",
+    "summary": "Customer: Elena Rostova (elena.rostova@example.com)\nOrder: ORD-90214\nUser Query: This is UNACCEPTABLE and FRAUD! My order ORD-90214 was $649 and you lost it! Escalate to a human manager immediately or I contact my lawyer!\nFindings: Order Status=In Transit - Delayed. Eligibility=N/A.",
+    "assigned_queue": "Priority Incident Resolution Team",
+    "sla_target_minutes": 10,
+    "created_at": "2026-09-25T21:22:44.542989",
+    "status": "Assigned to Human Specialist"
+  },
+  {
+    "ticket_id": "TCK-20260925-A08164",
+    "type": "STANDARD_SUPPORT_TICKET",
+    "customer_name": "Elena Rostova",
+    "email": "elena.rostova@example.com",
+    "category": "Escalation",
+    "description": "This is UNACCEPTABLE and FRAUD! My order ORD-90214 was $649 and you lost it! Escalate to a human manager immediately or I contact my lawyer!",
+    "resolution_status": "Escalated to Human",
+    "created_at": "2026-09-25T21:22:44.551336"
+  }
+]

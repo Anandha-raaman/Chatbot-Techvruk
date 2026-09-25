@@ -1,0 +1,125 @@
+[
+  {
+    "customer_id": "CUST-1001",
+    "name": "Sarah Jenkins",
+    "email": "sarah.j@example.com",
+    "phone": "+1-555-019-2831",
+    "tier": "Gold",
+    "orders": [
+      {
+        "order_id": "ORD-89421",
+        "order_date": "2026-09-12",
+        "delivery_date": "2026-09-16",
+        "status": "Delivered",
+        "tracking_number": "TRK-FEDEX-998124",
+        "carrier": "FedEx Ground",
+        "items": [
+          {
+            "item_id": "ITEM-401",
+            "name": "Wireless Noise-Cancelling Headphones",
+            "quantity": 1,
+            "price": 179.99,
+            "category": "Electronics",
+            "is_returnable": true
+          }
+        ],
+        "total_amount": 179.99,
+        "payment_method": "Credit Card (Visa ending in 4242)",
+        "refund_status": "Refunded",
+        "refund_txn_id": "TXN-REF-BA256D16",
+        "refund_amount": 179.99,
+        "refund_date": "2026-09-25"
+      }
+    ]
+  },
+  {
+    "customer_id": "CUST-1002",
+    "name": "David Miller",
+    "email": "david.miller@example.com",
+    "phone": "+1-555-014-9923",
+    "tier": "Standard",
+    "orders": [
+      {
+        "order_id": "ORD-77312",
+        "order_date": "2026-07-10",
+        "delivery_date": "2026-07-15",
+        "status": "Delivered",
+        "tracking_number": "TRK-UPS-331092",
+        "carrier": "UPS Standard",
+        "items": [
+          {
+            "item_id": "ITEM-105",
+            "name": "Mechanical Gaming Keyboard",
+            "quantity": 1,
+            "price": 89.5,
+            "category": "Accessories",
+            "is_returnable": true
+          }
+        ],
+        "total_amount": 89.5,
+        "payment_method": "PayPal",
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "customer_id": "CUST-1003",
+    "name": "Elena Rostova",
+    "email": "elena.rostova@example.com",
+    "phone": "+1-555-017-4882",
+    "tier": "Platinum",
+    "orders": [
+      {
+        "order_id": "ORD-90214",
+        "order_date": "2026-09-20",
+        "delivery_date": null,
+        "status": "In Transit - Delayed",
+        "tracking_number": "TRK-DHL-887412",
+        "carrier": "DHL Express",
+        "items": [
+          {
+            "item_id": "ITEM-880",
+            "name": "Ultra-Wide Gaming Monitor 34-Inch",
+            "quantity": 1,
+            "price": 649.0,
+            "category": "Monitors",
+            "is_returnable": true
+          }
+        ],
+        "total_amount": 649.0,
+        "payment_method": "Credit Card (Amex ending in 1009)",
+        "refund_status": "None"
+      }
+    ]
+  },
+  {
+    "customer_id": "CUST-1004",
+    "name": "Marcus Vance",
+    "email": "marcus.vance@example.com",
+    "phone": "+1-555-012-7744",
+    "tier": "Standard",
+    "orders": [
+      {
+        "order_id": "ORD-91102",
+        "order_date": "2026-09-23",
+        "delivery_date": "2026-09-24",
+        "status": "Delivered",
+        "tracking_number": "TRK-USPS-443120",
+        "carrier": "USPS Priority",
+        "items": [
+          {
+            "item_id": "ITEM-552",
+            "name": "Ceramic Pour-Over Coffee Maker",
+            "quantity": 1,
+            "price": 45.0,
+            "category": "Kitchen",
+            "is_returnable": true
+          }
+        ],
+        "total_amount": 45.0,
+        "payment_method": "Apple Pay",
+        "refund_status": "None"
+      }
+    ]
+  }
+]

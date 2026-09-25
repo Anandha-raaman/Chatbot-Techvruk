@@ -101,10 +101,10 @@ Every interaction is backed by a typed Pydantic state model (`AgentState`):
 - Git
 
 ### 2. Installation
-Clone the repository (or extract the project folder) and install dependencies:
+Clone the repository:
 ```bash
-# Navigate to project directory
-cd techvruk-agent
+git clone https://github.com/Anandha-raaman/Chatbot-Techvruk.git
+cd Chatbot-Techvruk
 
 # Install dependencies
 pip install -r requirements.txt

@@ -270,138 +270,369 @@
     "saved_at": "2026-09-25T21:45:33.435601"
   },
   {
-    "goal_title": "Plan a 3-day cultural and culinary trip to Tokyo on a $1,200 budget for 2 people",
-    "domain": "trip_planning",
-    "timeline_days": 3,
-    "total_budget": 1200.0,
+    "goal": "Prepare for the AWS Solutions Architect exam in 30 days studying 2 hours a day",
+    "category": "Education & Research",
+    "complexity": "High (Multi-Phase Complex)",
+    "timeline_days": 30,
+    "estimated_hours": 135.0,
+    "total_budget": null,
     "subtasks": [
       {
         "task_id": "TASK-01",
-        "phase": "Phase 1: Pre-Departure Logistics",
-        "title": "Finalize transit tickets, airport transfers & book central accommodations",
-        "estimated_duration": "4 Hours",
+        "phase": "Phase 1: Inception & Scoping",
+        "title": "Define success criteria, resource boundaries & audit prerequisites for 'The AWS Solutions Architect exam in 30 days s'",
+        "estimated_duration": "1 Day",
         "priority": "High",
         "dependencies": [],
-        "deliverable": "Confirmed booking vouchers & arrival itinerary",
+        "deliverable": "Project scope charter and confirmed resource checklist",
         "status": "pending"
       },
       {
         "task_id": "TASK-02",
-        "phase": "Phase 1: Pre-Departure Logistics",
-        "title": "Secure local eSIM/mobile data and pre-order regional transit passes",
-        "estimated_duration": "1 Hour",
+        "phase": "Phase 1: Inception & Scoping",
+        "title": "Procure essential tooling, environment access & foundational assets",
+        "estimated_duration": "2-3 Hours",
         "priority": "Medium",
         "dependencies": [
           "TASK-01"
         ],
-        "deliverable": "Active connectivity & digital transit cards",
+        "deliverable": "Operational workspace & required dependencies initialized",
         "status": "pending"
       },
       {
         "task_id": "TASK-03",
-        "phase": "Phase 2: Day 1 Execution",
-        "title": "Day 1: Arrival, neighborhood orientation walk, and signature welcome dinner",
-        "estimated_duration": "Full Day (8-10 Hours)",
+        "phase": "Phase 2: Core Execution",
+        "title": "Execute primary build / milestone milestone for 'The AWS Solutions Architect exam in 30 days s'",
+        "estimated_duration": "2-3 Days",
         "priority": "High",
         "dependencies": [
           "TASK-02"
         ],
-        "deliverable": "Completed Day 1 experiential itinerary",
+        "deliverable": "Core work items executed and draft artifacts produced",
         "status": "pending"
       },
       {
         "task_id": "TASK-04",
-        "phase": "Phase 2: Day 2 Execution",
-        "title": "Day 2: Morning cultural heritage landmarks, afternoon museums & evening food tour",
-        "estimated_duration": "Full Day (8-10 Hours)",
-        "priority": "High",
+        "phase": "Phase 2: Core Execution",
+        "title": "Iterate, refine components and synthesize initial feedback",
+        "estimated_duration": "1-2 Days",
+        "priority": "Medium",
         "dependencies": [
           "TASK-03"
         ],
-        "deliverable": "Completed Day 2 experiential itinerary",
+        "deliverable": "Refined prototype / deliverables incorporating improvements",
         "status": "pending"
       },
       {
         "task_id": "TASK-05",
-        "phase": "Phase 2: Day 3 Execution",
-        "title": "Day 3: Scenic outdoor/nature exploration, artisan market shopping & farewell dinner",
-        "estimated_duration": "Full Day (8-10 Hours)",
+        "phase": "Phase 3: Validation & Quality Control",
+        "title": "Perform rigorous quality audit, edge-case testing and checklist review",
+        "estimated_duration": "1 Day",
         "priority": "High",
         "dependencies": [
           "TASK-04"
         ],
-        "deliverable": "Completed Day 3 experiential itinerary",
+        "deliverable": "QA sign-off with zero unresolved blockers",
         "status": "pending"
       },
       {
         "task_id": "TASK-06",
-        "phase": "Phase 3: Wrap-Up & Departure",
-        "title": "Pack souvenirs, settle lodging expenses & execute return transit transfer",
-        "estimated_duration": "3 Hours",
-        "priority": "Medium",
+        "phase": "Phase 4: Launch & Final Delivery",
+        "title": "Final execution, stakeholder handover and publication of 'The AWS Solutions Architect exam in'",
+        "estimated_duration": "2-4 Hours",
+        "priority": "High",
         "dependencies": [
           "TASK-05"
         ],
-        "deliverable": "Smooth checkout and return departure",
+        "deliverable": "Master objective delivered and plan closed",
         "status": "pending"
       }
     ],
     "critical_path": [
       "TASK-01",
       "TASK-03",
-      "TASK-04",
-      "TASK-05"
+      "TASK-05",
+      "TASK-06"
+    ],
+    "milestones": [
+      {
+        "name": "Milestone Alpha: Scoping & Setup Sign-Off",
+        "target_timing": "Day 1",
+        "criteria": "Prerequisites and workspace confirmed."
+      },
+      {
+        "name": "Milestone Beta: Core Deliverables Substantially Complete",
+        "target_timing": "Day 15",
+        "criteria": "Primary feature / activity executed."
+      },
+      {
+        "name": "Milestone Final: Complete Goal Delivery & Closure",
+        "target_timing": "Day 30",
+        "criteria": "All deliverables validated and archived."
+      }
     ],
     "risks": [
       {
-        "risk": "Inclement weather disrupting outdoor walking tours",
-        "severity": "Medium",
-        "mitigation_strategy": "Schedule flexible museum/indoor passes with open-date vouchers."
-      },
-      {
-        "risk": "Sold-out tickets for major landmarks",
+        "risk": "Schedule slip due to unanticipated scope expansion",
         "severity": "High",
-        "mitigation_strategy": "Reserve skip-the-line timed entry tickets at least 2 weeks in advance."
+        "mitigation_strategy": "Enforce strict milestone guardrails; freeze non-essential tasks to v1.1 backlog."
       },
       {
-        "risk": "Transit navigation confusion or delays",
-        "severity": "Low",
-        "mitigation_strategy": "Pre-download offline transit maps and regional metro navigation apps."
+        "risk": "External dependency delays (third-party tools, transit, weather)",
+        "severity": "Medium",
+        "mitigation_strategy": "Pre-arrange redundant backup options (e.g. offline assets, open vouchers)."
+      },
+      {
+        "risk": "Resource or budget exhaustion before completion",
+        "severity": "Medium",
+        "mitigation_strategy": "Maintain an explicit 10-15% unallocated financial and temporal buffer."
       }
     ],
-    "budget_breakdown": [
+    "plan_id": "PLAN-20260925-396435",
+    "saved_at": "2026-09-25T21:57:02.290382"
+  },
+  {
+    "goal": "Prepare for the AWS Solutions Architect exam in 30 days studying 2 hours a day",
+    "category": "Education & Research",
+    "complexity": "High (Multi-Phase Complex)",
+    "timeline_days": 30,
+    "estimated_hours": 135.0,
+    "total_budget": null,
+    "subtasks": [
       {
-        "category": "Lodging",
-        "percentage": 35.0,
-        "estimated_amount": 420.0,
-        "notes": "35% of overall estimated budget"
+        "task_id": "TASK-01",
+        "phase": "Phase 1: Inception & Scoping",
+        "title": "Define success criteria, resource boundaries & audit prerequisites for 'The AWS Solutions Architect exam in 30 days s'",
+        "estimated_duration": "1 Day",
+        "priority": "High",
+        "dependencies": [],
+        "deliverable": "Project scope charter and confirmed resource checklist",
+        "status": "pending"
       },
       {
-        "category": "Transportation",
-        "percentage": 25.0,
-        "estimated_amount": 300.0,
-        "notes": "25% of overall estimated budget"
+        "task_id": "TASK-02",
+        "phase": "Phase 1: Inception & Scoping",
+        "title": "Procure essential tooling, environment access & foundational assets",
+        "estimated_duration": "2-3 Hours",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-01"
+        ],
+        "deliverable": "Operational workspace & required dependencies initialized",
+        "status": "pending"
       },
       {
-        "category": "Dining",
-        "percentage": 20.0,
-        "estimated_amount": 240.0,
-        "notes": "20% of overall estimated budget"
+        "task_id": "TASK-03",
+        "phase": "Phase 2: Core Execution",
+        "title": "Execute primary build / milestone milestone for 'The AWS Solutions Architect exam in 30 days s'",
+        "estimated_duration": "2-3 Days",
+        "priority": "High",
+        "dependencies": [
+          "TASK-02"
+        ],
+        "deliverable": "Core work items executed and draft artifacts produced",
+        "status": "pending"
       },
       {
-        "category": "Activities And Tickets",
-        "percentage": 12.0,
-        "estimated_amount": 144.0,
-        "notes": "12% of overall estimated budget"
+        "task_id": "TASK-04",
+        "phase": "Phase 2: Core Execution",
+        "title": "Iterate, refine components and synthesize initial feedback",
+        "estimated_duration": "1-2 Days",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-03"
+        ],
+        "deliverable": "Refined prototype / deliverables incorporating improvements",
+        "status": "pending"
       },
       {
-        "category": "Emergency Buffer",
-        "percentage": 8.0,
-        "estimated_amount": 96.0,
-        "notes": "8% of overall estimated budget"
+        "task_id": "TASK-05",
+        "phase": "Phase 3: Validation & Quality Control",
+        "title": "Perform rigorous quality audit, edge-case testing and checklist review",
+        "estimated_duration": "1 Day",
+        "priority": "High",
+        "dependencies": [
+          "TASK-04"
+        ],
+        "deliverable": "QA sign-off with zero unresolved blockers",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-06",
+        "phase": "Phase 4: Launch & Final Delivery",
+        "title": "Final execution, stakeholder handover and publication of 'The AWS Solutions Architect exam in'",
+        "estimated_duration": "2-4 Hours",
+        "priority": "High",
+        "dependencies": [
+          "TASK-05"
+        ],
+        "deliverable": "Master objective delivered and plan closed",
+        "status": "pending"
       }
     ],
-    "plan_id": "PLAN-20260925-F1D441",
-    "saved_at": "2026-09-25T21:48:21.151282"
+    "critical_path": [
+      "TASK-01",
+      "TASK-03",
+      "TASK-05",
+      "TASK-06"
+    ],
+    "milestones": [
+      {
+        "name": "Milestone Alpha: Scoping & Setup Sign-Off",
+        "target_timing": "Day 1",
+        "criteria": "Prerequisites and workspace confirmed."
+      },
+      {
+        "name": "Milestone Beta: Core Deliverables Substantially Complete",
+        "target_timing": "Day 15",
+        "criteria": "Primary feature / activity executed."
+      },
+      {
+        "name": "Milestone Final: Complete Goal Delivery & Closure",
+        "target_timing": "Day 30",
+        "criteria": "All deliverables validated and archived."
+      }
+    ],
+    "risks": [
+      {
+        "risk": "Schedule slip due to unanticipated scope expansion",
+        "severity": "High",
+        "mitigation_strategy": "Enforce strict milestone guardrails; freeze non-essential tasks to v1.1 backlog."
+      },
+      {
+        "risk": "External dependency delays (third-party tools, transit, weather)",
+        "severity": "Medium",
+        "mitigation_strategy": "Pre-arrange redundant backup options (e.g. offline assets, open vouchers)."
+      },
+      {
+        "risk": "Resource or budget exhaustion before completion",
+        "severity": "Medium",
+        "mitigation_strategy": "Maintain an explicit 10-15% unallocated financial and temporal buffer."
+      }
+    ],
+    "plan_id": "PLAN-20260925-20C276",
+    "saved_at": "2026-09-25T21:59:10.917776"
+  },
+  {
+    "goal": "Prepare for the AWS Solutions Architect exam in 30 days studying 2 hours a day",
+    "category": "Education & Research",
+    "complexity": "High (Multi-Phase Complex)",
+    "timeline_days": 30,
+    "estimated_hours": 135.0,
+    "total_budget": null,
+    "subtasks": [
+      {
+        "task_id": "TASK-01",
+        "phase": "Phase 1: Inception & Scoping",
+        "title": "Define success criteria, resource boundaries & audit prerequisites for 'The AWS Solutions Architect exam in 30 days s'",
+        "estimated_duration": "1 Day",
+        "priority": "High",
+        "dependencies": [],
+        "deliverable": "Project scope charter and confirmed resource checklist",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-02",
+        "phase": "Phase 1: Inception & Scoping",
+        "title": "Procure essential tooling, environment access & foundational assets",
+        "estimated_duration": "2-3 Hours",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-01"
+        ],
+        "deliverable": "Operational workspace & required dependencies initialized",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-03",
+        "phase": "Phase 2: Core Execution",
+        "title": "Execute primary build / milestone milestone for 'The AWS Solutions Architect exam in 30 days s'",
+        "estimated_duration": "2-3 Days",
+        "priority": "High",
+        "dependencies": [
+          "TASK-02"
+        ],
+        "deliverable": "Core work items executed and draft artifacts produced",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-04",
+        "phase": "Phase 2: Core Execution",
+        "title": "Iterate, refine components and synthesize initial feedback",
+        "estimated_duration": "1-2 Days",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-03"
+        ],
+        "deliverable": "Refined prototype / deliverables incorporating improvements",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-05",
+        "phase": "Phase 3: Validation & Quality Control",
+        "title": "Perform rigorous quality audit, edge-case testing and checklist review",
+        "estimated_duration": "1 Day",
+        "priority": "High",
+        "dependencies": [
+          "TASK-04"
+        ],
+        "deliverable": "QA sign-off with zero unresolved blockers",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-06",
+        "phase": "Phase 4: Launch & Final Delivery",
+        "title": "Final execution, stakeholder handover and publication of 'The AWS Solutions Architect exam in'",
+        "estimated_duration": "2-4 Hours",
+        "priority": "High",
+        "dependencies": [
+          "TASK-05"
+        ],
+        "deliverable": "Master objective delivered and plan closed",
+        "status": "pending"
+      }
+    ],
+    "critical_path": [
+      "TASK-01",
+      "TASK-03",
+      "TASK-05",
+      "TASK-06"
+    ],
+    "milestones": [
+      {
+        "name": "Milestone Alpha: Scoping & Setup Sign-Off",
+        "target_timing": "Day 1",
+        "criteria": "Prerequisites and workspace confirmed."
+      },
+      {
+        "name": "Milestone Beta: Core Deliverables Substantially Complete",
+        "target_timing": "Day 15",
+        "criteria": "Primary feature / activity executed."
+      },
+      {
+        "name": "Milestone Final: Complete Goal Delivery & Closure",
+        "target_timing": "Day 30",
+        "criteria": "All deliverables validated and archived."
+      }
+    ],
+    "risks": [
+      {
+        "risk": "Schedule slip due to unanticipated scope expansion",
+        "severity": "High",
+        "mitigation_strategy": "Enforce strict milestone guardrails; freeze non-essential tasks to v1.1 backlog."
+      },
+      {
+        "risk": "External dependency delays (third-party tools, transit, weather)",
+        "severity": "Medium",
+        "mitigation_strategy": "Pre-arrange redundant backup options (e.g. offline assets, open vouchers)."
+      },
+      {
+        "risk": "Resource or budget exhaustion before completion",
+        "severity": "Medium",
+        "mitigation_strategy": "Maintain an explicit 10-15% unallocated financial and temporal buffer."
+      }
+    ],
+    "plan_id": "PLAN-20260925-5CB3E6",
+    "saved_at": "2026-09-25T21:59:53.692285"
   }
 ]

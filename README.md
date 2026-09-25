@@ -1,39 +1,45 @@
-# Autonomous Task Planner Agent
+# Universal Autonomous Task Planner Agent
 ### Techvruk AI Agentic System Contest Submission
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Architecture](https://img.shields.io/badge/Architecture-ReAct_Agentic_Workflow-purple.svg)](#system-architecture--workflow-diagram)
+[![Architecture](https://img.shields.io/badge/Architecture-ReAct_Agentic_Workflow-DC2626.svg)](#system-architecture--workflow-diagram)
 [![Test Suite](https://img.shields.io/badge/Tests-Passing_6%2F6-brightgreen.svg)](#testing--verification)
-[![UI](https://img.shields.io/badge/Interface-Streamlit_%2B_CLI-orange.svg)](#running-the-project)
+[![UI](https://img.shields.io/badge/Interface-Gemini_Red_%26_White_Theme-E11D48.svg)](#running-the-project)
+[![Scope](https://img.shields.io/badge/Task_Scope-Universal_%2F_Any_Goal-red.svg)](#problem-statement--universal-scope)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An enterprise-grade, autonomous AI Agentic System built to demonstrate the core principles of agentic behavior: **reasoning, multi-step planning, tool execution, and continuous state context**.
+An enterprise-grade, universal AI Agentic System built to demonstrate the core principles of agentic behavior: **reasoning, multi-step planning, tool execution, and continuous state context** for **ANY arbitrary task or goal**.
 
 Directly fulfilling the official contest task requirement:
 > **"Task Planner Agent: Given a goal (e.g., 'plan a 3-day trip'), break it into sub-tasks and generate a structured plan."**
 
-Rather than generating generic one-shot paragraphs, this system implements an explicit **ReAct (Reasoning + Acting)** state machine that parses constraints, decomposes objectives into phase-aligned subtasks with dependency tags, tests feasibility against domain blueprints, determines the critical path schedule, assesses operational risks, and exports an actionable master roadmap with a unique Plan ID (`PLAN-2026-...`).
+Rather than being limited to hardcoded blueprints, this system operates as a **Universal Task Planner**: whether given a travel goal, software sprint, exam study plan, hackathon event, or apartment renovation, it dynamically parses intent, audits workload feasibility, deconstructs the objective into phased subtasks with dependency tags, computes critical path schedules, assesses operational risks, and exports an actionable master roadmap with a unique Plan ID (`PLAN-2026-...`).
+
+Wrapped in an **ultra-smooth Red & White Gemini-inspired user interface**.
 
 ---
 
-## 📌 Problem & Task Chosen
+## 📌 Problem Statement & Universal Scope
 
-### The Challenge of Complex Goals
-When a human or organization presents a high-level goal (e.g. *"Plan a 3-day trip to Tokyo on a $1,200 budget"* or *"Build and launch an AI MVP in 4 weeks"*), traditional LLMs fall short:
-1. **Unstructured Prose Dumps:** Standard chatbots output walls of generic text lacking dates, milestones, or explicit deliverables.
-2. **Zero Constraint Verification:** They fail to verify whether financial budgets ($1,200) or timeframes (3 days) realistically support the activities.
+### The Failure of One-Shot Prompting
+When a user asks a conventional LLM to plan a project (e.g. *"Plan a 3-day trip to Tokyo on a $1,200 budget"* or *"Build an AI SaaS MVP in 4 weeks"*):
+1. **Unstructured Paragraph Dumps:** Standard chatbots output walls of generic text lacking dates, milestones, or explicit deliverables.
+2. **Zero Constraint Verification:** They fail to verify whether financial budgets or timeframes realistically support the activities.
 3. **No Dependency Awareness:** They schedule downstream activities before prerequisites are met (e.g., attempting site tours before airport transfer or lodging check-in).
-4. **No Risk Safeguards:** They ignore weather disruptions, booking lead times, and operational bottlenecks.
+4. **Rigid Static Templates:** Hardcoded bots break when the user enters an unexpected or non-standard goal.
 
-### The Agentic Solution
-This system operates as an **Autonomous Task Planner Agent**:
-- **Constraint Parsing:** Extracts temporal boundaries, budget ceilings, and domain types.
-- **Blueprint Matching:** Queries historical blueprints (`data/planner_blueprints.json`) to establish standard execution phases.
-- **Feasibility Auditing:** Evaluates scope against duration and resources with numerical scoring (0–100).
-- **Sub-task Decomposition:** Constructs numbered subtasks (`TASK-01`, `TASK-02`) with estimated hours, priority ratings, and dependency links.
-- **Critical Path Derivation:** Computes the bottleneck chain that dictates project completion.
-- **Risk Mitigation Matrix:** Injects contingency safeguards for identified operational failure modes.
-- **Plan Persistence:** Archives the structured plan into persistent storage (`data/plans.json`).
+### The Universal Agentic Solution
+This system is completely domain-agnostic and handles **ANY task**:
+- **Goal Intent & Constraint Extraction:** Autonomously infers action verbs, domain category, timeline constraints (days/weeks/months), budget ceilings, and complexity.
+- **Feasibility & Workload Auditing:** Evaluates effort hours, workload intensity, and provides scoping recommendations.
+- **Dynamic Phased Decomposition:** Partitions ANY goal into 4 chronological stages:
+  1. *Phase 1: Inception, Scoping & Prerequisites*
+  2. *Phase 2: Core Execution & Implementation*
+  3. *Phase 3: Validation, Quality Review & Testing*
+  4. *Phase 4: Launch, Delivery & Handover*
+- **Critical Path & Milestones:** Identifies the bottleneck dependency chain and establishes milestone progress gates.
+- **Failure Mode Safeguards:** Pairs each identified operational risk with an automated contingency protocol.
+- **Plan Persistence:** Archives the structured plan into persistent memory (`data/plans.json`).
 
 ---
 
@@ -43,53 +49,53 @@ The agent adheres strictly to the **Plan → Act → Observe → Respond** agent
 
 ```mermaid
 flowchart TD
-    A[User Goal: 'Plan a 3-day trip to Tokyo...'] --> B[Phase 1: Constraint Parser]
+    A[User Goal: ANY Task or Goal Input] --> B[Phase 1: Task Intent & Constraint Parsing]
     
-    subgraph Parsing [1. Constraint Extraction]
-        B --> B1[Extract Duration: 3 Days]
-        B1 --> B2[Extract Budget: $1,200.00]
-        B2 --> B3[Classify Domain: trip_planning]
+    subgraph Parsing [1. Goal Decomposition]
+        B --> B1[Extract Goal Verb & Topic]
+        B1 --> B2[Extract Timeline & Budget Limits]
+        B2 --> B3[Determine Complexity Tier]
     end
     
     B3 --> C[Phase 2: ReAct Autonomous Execution Loop]
     
     subgraph ReActLoop [2. ReAct Execution Loop]
         C --> D1{Thought 1}
-        D1 --> T1[search_domain_blueprints]
-        T1 --> O1[Observe Blueprint Phases & Tasks]
+        D1 --> T1[analyze_task_intent]
+        T1 --> O1[Observe Domain Category & Constraints]
         
         O1 --> D2{Thought 2}
-        D2 --> T2[analyze_goal_feasibility]
-        T2 --> O2[Observe Feasibility Score & Warnings]
+        D2 --> T2[audit_feasibility_and_effort]
+        T2 --> O2[Observe Feasibility Score & Workload Hours]
         
         O2 --> D3{Thought 3}
-        D3 --> T3[decompose_into_subtasks]
-        T3 --> O3[Observe Ordered Subtasks & Deliverables]
+        D3 --> T3[decompose_any_task]
+        T3 --> O3[Observe 4-Phase Subtasks & Deliverables]
         
         O3 --> D4{Thought 4}
-        D4 --> T4[calculate_schedule_and_critical_path]
-        T4 --> O4[Observe Critical Path & Milestones]
+        D4 --> T4[derive_critical_path_and_milestones]
+        T4 --> O4[Observe Critical Path & 3 Progress Gates]
         
         O4 --> D5{Thought 5}
-        D5 --> T5[assess_risks_and_mitigations]
-        T5 --> O5[Observe Risk Matrix & Safeguards]
+        D5 --> T5[audit_failure_modes_and_safeguards]
+        T5 --> O5[Observe Risk Matrix & Mitigations]
         
         O5 --> D6{Thought 6}
-        D6 --> T6[export_structured_plan]
+        D6 --> T6[persist_master_plan]
         T6 --> O6[Observe Plan ID: PLAN-2026-...]
     end
     
     O6 --> F[Phase 3: Synthesize Final Master Execution Plan]
-    F --> G[Deliver Master Plan: Tasks, Critical Path, Budget, Risks]
+    F --> G[Deliver Master Plan: Tasks, Milestones, Risks, Effort]
 ```
 
 ### State Management (`AgentState`)
 Every interaction is backed by a typed Pydantic state model (`AgentState`):
 - `session_id`: Unique identifier for the conversation session.
-- `user_goal`: Original raw prompt provided by the user.
-- `parsed_constraints`: Dictionary holding duration (days), budget ceiling, and domain.
+- `user_goal`: Raw goal prompt provided by the user.
+- `parsed_constraints`: Dictionary holding duration (days), budget ceiling, domain category, and complexity tier.
 - `scratchpad`: Sequential list of `AgentAction` objects recording `Thought`, `Action Name`, `Action Input`, and `Observation`.
-- `structured_plan`: Complete `StructuredPlan` object containing subtasks, critical path, risks, and budget breakdown.
+- `structured_plan`: Complete `StructuredPlan` object containing subtasks, critical path, milestones, and risks.
 - `final_response`: Executive Markdown presentation roadmap.
 
 ---
@@ -98,12 +104,12 @@ Every interaction is backed by a typed Pydantic state model (`AgentState`):
 
 | Tool Name | Input Parameters | Output / Action |
 |:---|:---|:---|
-| `search_domain_blueprints` | `domain_or_goal: str` | Retrieves domain templates, milestone phases, and typical task structures. |
-| `analyze_goal_feasibility` | `goal: str`, `timeline_days: int`, `budget: float` | Computes feasibility score (0–100), warnings, and scope adjustments. |
-| `decompose_into_subtasks` | `goal: str`, `domain: str`, `timeline_days: int` | Deconstructs goal into chronologically ordered subtasks with duration and deliverables. |
-| `calculate_schedule_and_critical_path` | `subtasks: list`, `timeline_days: int` | Maps dependency chains, derives the critical path, and establishes milestone checkpoints. |
-| `assess_risks_and_mitigations` | `goal: str`, `domain: str` | Audits operational failure points and injects concrete contingency protocols. |
-| `export_structured_plan` | `plan_data: dict` | Persists the final structured plan into `data/plans.json` with a unique Plan ID. |
+| `analyze_task_intent` | `goal: str` | Extracts goal intent, domain category, duration constraints, budget, and complexity. |
+| `audit_feasibility_and_effort` | `goal: str`, `timeline_days: int`, `complexity: str`, `budget: float` | Computes workload hours, feasibility score (0–100), warnings, and scope advice. |
+| `decompose_any_task` | `goal: str`, `category: str`, `complexity: str`, `timeline_days: int` | Universally breaks down ANY task into 4 phased, chronological deliverables. |
+| `derive_critical_path_and_milestones` | `subtasks: list`, `timeline_days: int` | Maps dependency chains, derives the sequential critical path, and establishes 3 milestone checkpoints. |
+| `audit_failure_modes_and_safeguards` | `goal: str`, `category: str` | Audits operational failure points and injects concrete contingency protocols. |
+| `persist_master_plan` | `plan_data: dict` | Persists the final structured plan into `data/plans.json` with a unique Plan ID. |
 
 ---
 
@@ -134,8 +140,8 @@ echo GEMINI_API_KEY=your_gemini_api_key_here > .env
 
 ### 4. Running the Project
 
-#### Option A: Interactive Streamlit Web UI (Recommended)
-Launch the interactive web dashboard with live reasoning tree and 1-click test scenarios:
+#### Option A: Interactive Streamlit Web UI (Gemini Red & White Theme)
+Launch the web dashboard featuring prompt chips, live reasoning tree, and real-time ReAct telemetry:
 ```bash
 python main.py --web
 ```
@@ -148,7 +154,7 @@ python main.py --cli
 ```
 
 #### Option C: Automated Benchmark Demo
-Run all 4 contest benchmark scenarios sequentially:
+Run 4 automated multi-domain planning scenarios sequentially:
 ```bash
 python main.py
 ```
@@ -161,78 +167,32 @@ python -m unittest test_agent.py
 
 ---
 
-## 📋 Sample Input & Output Traces
+## 📋 Multi-Domain Benchmark Scenarios
 
-### Primary Benchmark: 3-Day Trip to Tokyo
-- **User Goal:**  
-  `"Plan a 3-day cultural and culinary trip to Tokyo for 2 people with historic landmarks and food markets on a $1,200 budget"`
-- **ReAct Execution Trace:**
-  - *Thought 1:* Query domain blueprints for `trip_planning`.  
-    *Action:* `search_domain_blueprints(domain_or_goal="trip to Tokyo")`  
-    *Observation:* Retrieved travel blueprint with 3 phases (Pre-Departure, Daily Itinerary, Departure Logistics).
-  - *Thought 2:* Test feasibility for 3 days with $1,200 budget.  
-    *Action:* `analyze_goal_feasibility(timeline_days=3, budget=1200.0)`  
-    *Observation:* Feasibility Score: **90/100 (Highly Feasible)**.
-  - *Thought 3:* Deconstruct goal into daily phased subtasks.  
-    *Action:* `decompose_into_subtasks(timeline_days=3, domain="trip_planning")`  
-    *Observation:* Generated 6 discrete subtasks (Logistics, Transit Cards, Day 1 Orientation, Day 2 Cultural Landmarks, Day 3 Markets, Return Checkout).
-  - *Thought 4:* Derive critical sequential path.  
-    *Action:* `calculate_schedule_and_critical_path(subtasks=..., timeline_days=3)`  
-    *Observation:* Critical Path: `TASK-01 ➔ TASK-03 ➔ TASK-04 ➔ TASK-05`.
-  - *Thought 5:* Assess weather and operational risks.  
-    *Action:* `assess_risks_and_mitigations(domain="trip_planning")`  
-    *Observation:* Flagged weather risks and landmark booking lead times with voucher mitigations.
-  - *Thought 6:* Export master plan object.  
-    *Action:* `export_structured_plan(...)`  
-    *Observation:* Plan saved as `PLAN-20260925-B819E2`.
+### Benchmark 1: 3-Day Trip to Tokyo (Contest Prompt Example)
+- **Goal:** `"Plan a 3-day cultural and culinary trip to Tokyo for 2 people with historic landmarks and food markets on a $1,200 budget"`
+- **Decomposed Phases:**
+  - *Phase 1 (Logistics):* Flight confirmation, central hotel booking, local eSIM data, and IC transit card pre-orders.
+  - *Phase 2 (Itinerary):* Day 1 arrival & neighborhood walk; Day 2 Asakusa & culinary food tour; Day 3 Meiji Shrine & market shopping.
+  - *Phase 3 (Departure):* Souvenir packing, hotel checkout, and return transit transfer.
+- **Critical Path:** `TASK-01 ➔ TASK-03 ➔ TASK-04 ➔ TASK-05`
+- **Risks & Safeguards:** Advance reservation of landmark passes + open-date museum backup vouchers for rain.
 
-- **Final Structured Plan Output:**
-  ```markdown
-  ### 📋 Autonomous Master Execution Plan: `PLAN-20260925-B819E2`
-  > **Primary Goal:** *"Plan a 3-day cultural and culinary trip to Tokyo for 2 people with historic landmarks and food markets on a $1,200 budget"*
-  > **Domain:** `TRIP_PLANNING` | **Timeline:** **3 Days** | **Estimated Budget:** **$1,200.00**
+### Benchmark 2: SaaS AI MVP Launch in 4 Weeks
+- **Goal:** `"Build and launch a SaaS AI MVP in 4 weeks with user authentication and payment billing on a $2,000 budget"`
+- **Decomposed Phases:**
+  - *Phase 1:* PRD specification, database schema design, and CI/CD repository setup.
+  - *Phase 2:* Backend service endpoints, Stripe payment webhooks, and responsive frontend UI.
+  - *Phase 3:* End-to-end integration testing, input guardrails, and telemetry logging.
+  - *Phase 4:* Cloud deployment with custom SSL domain, beta onboarding, and feedback triage.
 
-  ### 🎯 Decomposed Sub-Task Roadmap
-  #### 📍 Phase 1: Pre-Departure Logistics
-  - **`TASK-01` 🔴 Finalize transit tickets, airport transfers & book central accommodations** (4 Hours)
-    *Deliverable:* Confirmed booking vouchers & arrival itinerary
-  - **`TASK-02` 🟡 Secure local eSIM/mobile data and pre-order regional transit passes** (1 Hour) *(Depends on `TASK-01`)*
-    *Deliverable:* Active connectivity & digital transit cards
-
-  #### 📍 Phase 2: Daily Itinerary Execution
-  - **`TASK-03` 🔴 Day 1: Arrival, neighborhood orientation walk, and signature welcome dinner** (Full Day)
-    *Deliverable:* Completed Day 1 experiential itinerary
-  - **`TASK-04` 🔴 Day 2: Morning cultural heritage landmarks, afternoon museums & evening food tour** (Full Day)
-    *Deliverable:* Completed Day 2 experiential itinerary
-  - **`TASK-05` 🔴 Day 3: Scenic outdoor/nature exploration, artisan market shopping & farewell dinner** (Full Day)
-    *Deliverable:* Completed Day 3 experiential itinerary
-
-  #### 📍 Phase 3: Wrap-Up & Departure
-  - **`TASK-06` 🟡 Pack souvenirs, settle lodging expenses & execute return transit transfer** (3 Hours)
-    *Deliverable:* Smooth checkout and return departure
-
-  ### ⚡ Critical Path & Milestone Schedule
-  - **Critical Sequential Path:** `TASK-01 ➔ TASK-03 ➔ TASK-04 ➔ TASK-05`
-  - **Milestone 1:** Logistics & Readiness verified before arrival.
-  - **Milestone 2:** Midpoint cultural landmarks executed.
-  - **Milestone 3:** Final checkout completed with zero budget overruns.
-
-  ### 💰 Resource & Budget Allocation ($1,200.00)
-  | Expense Category | Allocation % | Estimated Cost | Notes |
-  |:---|:---:|:---:|:---|
-  | Lodging | 35% | **$420.00** | Centrally located hotel |
-  | Transportation | 25% | **$300.00** | Metro passes & transfers |
-  | Dining | 20% | **$240.00** | Street food & culinary dinner |
-  | Activities & Tickets | 12% | **$144.00** | Museum & landmark admissions |
-  | Emergency Buffer | 8% | **$96.00** | Incidentals & contingencies |
-
-  ### 🛡️ Risk Audit & Contingency Matrix
-  | Identified Risk | Severity | Automated Mitigation Protocol |
-  |:---|:---:|:---|
-  | Inclement weather disrupting outdoor walking tours | `MEDIUM` | Schedule flexible museum/indoor passes with open-date vouchers. |
-  | Sold-out tickets for major landmarks | `HIGH` | Reserve skip-the-line timed entry tickets at least 2 weeks in advance. |
-  | Transit navigation confusion or delays | `LOW` | Pre-download offline transit maps and regional metro navigation apps. |
-  ```
+### Benchmark 3: Exam Preparation Sprint
+- **Goal:** `"Prepare for the AWS Solutions Architect exam in 30 days studying 2 hours daily with hands-on practice labs"`
+- **Decomposed Phases:**
+  - *Phase 1:* Syllabus scoping, official documentation curation, and benchmark diagnostic test.
+  - *Phase 2:* High-priority service deep-dives (Compute, Storage, Networking, IAM).
+  - *Phase 3:* Hands-on architecture labs and timed mock exams.
+  - *Phase 4:* Final weak-area revision, formula cheatsheets, and exam day logistics.
 
 ---
 
@@ -245,15 +205,15 @@ python -m unittest test_agent.py -v
 
 ### Test Output:
 ```text
-test_01_search_domain_blueprints (__main__.TestTaskPlannerAgent) ... ok
-test_02_analyze_goal_feasibility (__main__.TestTaskPlannerAgent) ... ok
-test_03_decompose_trip_planning_goal (__main__.TestTaskPlannerAgent) ... ok
-test_04_critical_path_and_schedule (__main__.TestTaskPlannerAgent) ... ok
-test_05_risk_assessment_and_mitigation (__main__.TestTaskPlannerAgent) ... ok
-test_06_end_to_end_agentic_workflow_trip_plan (__main__.TestTaskPlannerAgent) ... ok
+test_01_analyze_task_intent (__main__.TestUniversalTaskPlanner) ... ok
+test_02_audit_feasibility (__main__.TestUniversalTaskPlanner) ... ok
+test_03_decompose_arbitrary_task (__main__.TestUniversalTaskPlanner) ... ok
+test_04_critical_path_and_milestones (__main__.TestUniversalTaskPlanner) ... ok
+test_05_risk_safeguards (__main__.TestUniversalTaskPlanner) ... ok
+test_06_end_to_end_universal_planning (__main__.TestUniversalTaskPlanner) ... ok
 
 ----------------------------------------------------------------------
-Ran 6 tests in 0.007s
+Ran 6 tests in 0.025s
 
 OK
 ```
@@ -263,13 +223,13 @@ OK
 ## 📊 Presentation Deliverable
 
 As required by the contest rules (*Short presentation — max 5 slides*), the slide deck is provided in two formats:
-1. **PowerPoint Presentation:** `Techvruk_Agentic_System_Presentation.pptx` (Generated automatically via `generate_pptx.py`).
+1. **PowerPoint Presentation:** `Techvruk_Agentic_System_Presentation.pptx` (Generated automatically with executive Red & White aesthetic).
 2. **Speaker Notes & Markdown Deck:** [`presentation.md`](presentation.md) (Slide-by-slide script, timing, and talking points).
 
 ---
 
 ## ⚖️ Contest Guidelines & Free-Tier Compliance
 
-- **No Paid APIs:** Fully functional offline simulator engine ensures zero dependencies on paid tokens.
+- **No Paid APIs Required:** Built-in offline simulator engine ensures zero dependencies on paid tokens.
 - **Original Architecture:** Custom Pydantic state machine with explicit ReAct tool loop developed specifically for this contest.
 - **Deterministic Action Logs:** Complete audit trail in `data/plans.json`.

@@ -1,15 +1,15 @@
 """
-Techvruk AI Task Planner Agent Package.
+Universal Task Planner Agent Package.
 """
 from .core import TaskPlannerAgent
-from .state import AgentState, StructuredPlan, SubTask, RiskItem, BudgetAllocation, AgentAction
+from .state import AgentState, StructuredPlan, SubTask, RiskItem, Milestone, AgentAction
 from .tools import (
-    search_domain_blueprints,
-    analyze_goal_feasibility,
-    decompose_into_subtasks,
-    calculate_schedule_and_critical_path,
-    assess_risks_and_mitigations,
-    export_structured_plan,
+    analyze_task_intent,
+    audit_feasibility_and_effort,
+    decompose_any_task,
+    derive_critical_path_and_milestones,
+    audit_failure_modes_and_safeguards,
+    persist_master_plan,
     TOOL_METADATA
 )
 
@@ -19,13 +19,13 @@ __all__ = [
     "StructuredPlan",
     "SubTask",
     "RiskItem",
-    "BudgetAllocation",
+    "Milestone",
     "AgentAction",
-    "search_domain_blueprints",
-    "analyze_goal_feasibility",
-    "decompose_into_subtasks",
-    "calculate_schedule_and_critical_path",
-    "assess_risks_and_mitigations",
-    "export_structured_plan",
+    "analyze_task_intent",
+    "audit_feasibility_and_effort",
+    "decompose_any_task",
+    "derive_critical_path_and_milestones",
+    "audit_failure_modes_and_safeguards",
+    "persist_master_plan",
     "TOOL_METADATA"
 ]

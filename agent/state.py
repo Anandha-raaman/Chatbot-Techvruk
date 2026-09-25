@@ -1,6 +1,6 @@
 """
-Pydantic State Context Models for Techvruk Task Planner Agent.
-Maintains structured context across the Plan -> Act -> Observe -> Respond lifecycle.
+Pydantic State Context Models for Universal Task Planner Agent.
+Maintains structured context across the Plan -> Act -> Observe -> Respond lifecycle for ANY task.
 """
 
 from typing import List, Dict, Any, Optional
@@ -9,7 +9,7 @@ from datetime import datetime
 
 
 class SubTask(BaseModel):
-    """Discrete, actionable sub-task within the structured plan."""
+    """Discrete, actionable subtask within the master plan."""
     task_id: str
     phase: str
     title: str
@@ -21,46 +21,47 @@ class SubTask(BaseModel):
 
 
 class RiskItem(BaseModel):
-    """Identified risk and mitigation safeguard."""
+    """Potential failure mode and mitigation strategy."""
     risk: str
     severity: str  # Critical, High, Medium, Low
     mitigation_strategy: str
 
 
-class BudgetAllocation(BaseModel):
-    """Categorized financial or resource allocation."""
-    category: str
-    percentage: float
-    estimated_amount: float
-    notes: str = ""
+class Milestone(BaseModel):
+    """Key progress checkpoint."""
+    name: str
+    target_timing: str
+    criteria: str
 
 
 class StructuredPlan(BaseModel):
-    """Final, comprehensive structured plan object."""
+    """Master structured execution plan for any goal."""
     plan_id: str
-    goal_title: str
-    domain: str
+    goal: str
+    category: str
+    complexity: str
     timeline_days: int
+    estimated_hours: float
     total_budget: Optional[float] = None
     subtasks: List[SubTask] = Field(default_factory=list)
     critical_path: List[str] = Field(default_factory=list)
+    milestones: List[Milestone] = Field(default_factory=list)
     risks: List[RiskItem] = Field(default_factory=list)
-    budget_breakdown: List[BudgetAllocation] = Field(default_factory=list)
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 
 class AgentAction(BaseModel):
     """Telemetry record of a single ReAct tool execution."""
     step_num: int
-    thought: str = Field(description="Agent's reasoning before calling tool")
-    action_name: str = Field(description="Name of the invoked tool")
+    thought: str = Field(description="Agent's reasoning before invoking tool")
+    action_name: str = Field(description="Name of the tool invoked")
     action_input: Dict[str, Any] = Field(default_factory=dict)
     observation: Any = Field(default=None)
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 
 class AgentState(BaseModel):
-    """Global execution state maintained across all workflow phases."""
+    """Global state context maintained across all workflow phases."""
     session_id: str
     user_goal: str
     parsed_constraints: Dict[str, Any] = Field(default_factory=dict)

@@ -1,91 +1,92 @@
-# Techvruk AI Agentic System — Short Presentation (5 Slides)
+# Techvruk AI Agentic System — Task Planner Presentation (5 Slides)
 
 > **File:** `Techvruk_Agentic_System_Presentation.pptx` (Widescreen 16:9)  
-> **Contest Rule:** Max 5 slides (Bonus Points Deliverable)  
+> **Contest Rule:** Short presentation (max 5 slides)  
 > **Candidate:** Anandha Raaman S  
-> **Topic:** Autonomous Customer Support & Escalation Agent  
+> **Chosen Task:** Task Planner Agent (`Given a goal e.g. 'plan a 3-day trip', break it into sub-tasks and generate a structured plan`)  
 
 ---
 
 ## 🎯 Slide 1: Title & Overview
-- **Header:** TECHVRUK AI CONTEST SUBMISSION • AGENTIC SYSTEM
-- **Title:** Autonomous Customer Support & Intelligent Escalation Agent
-- **Subtitle:** Demonstrating the Complete ReAct Agentic Cycle: `Plan → Act → Observe → Respond` with Dynamic Multi-Tool Execution & Tier-2 Human Escalation Protocol
+- **Header:** TECHVRUK AI CONTEST SUBMISSION • TASK PLANNER AGENT
+- **Title:** Autonomous Task Planner Agent: Goal Decomposition & Execution Architecture
+- **Subtitle:** Given an ambiguous goal (e.g., *"plan a 3-day trip"*), autonomously decomposes it into phased sub-tasks, computes feasibility, critical path schedules, budget allocations, and contingency safeguards.
 - **Presenter Info:** Anandha Raaman S | Generative AI Engineer
-- **Stack:** Python 3.14, Pydantic 2.x, Google Gemini API / Offline Simulator Engine, Streamlit UI
+- **Stack:** Python 3.14, Pydantic 2.x, Google Gemini API / Offline Engine, Streamlit UI
 
 > **Speaker Notes:**  
-> *"Good day evaluators. Today I am presenting an autonomous AI Agentic System designed for enterprise customer support and incident escalation. Rather than building a conventional one-shot chatbot, this system implements a strict ReAct workflow that autonomously breaks down user goals, coordinates 6 specialized tools against live knowledge bases and customer databases, and applies deterministic escalation logic when edge cases or customer distress are detected."*
+> *"Good day evaluators. For this contest, I have built an Autonomous Task Planner Agent that directly solves the contest challenge: 'Given a goal, break it down into sub-tasks and generate a structured plan.' Instead of outputting generic prose, the agent follows an explicit ReAct workflow that extracts constraints, queries domain blueprints, audits feasibility, schedules critical paths, and exports a master execution roadmap."*
 
 ---
 
 ## 🔍 Slide 2: Context & Problem Statement
 - **Header:** 01 / Context & Problem
-- **Title:** Why Single-Call Chatbots Fail in Enterprise Support
-- **Left Column (Traditional Chatbot Failures):**
-  - **Brittle One-Shot Prompts:** Prone to hallucinating fake policies without checking source-of-truth records.
-  - **Rigid Decision Trees:** Leave customers trapped in loops when queries have multiple nuances.
-  - **No Autonomous Action:** Cannot query order databases, compute date deltas against return windows, or issue refunds.
-  - **Blinded to Customer Distress:** Misses indicators of rage or legal exposure that require human intervention.
-- **Right Column (Our Agentic Solution):**
-  - **Decomposed Multi-Step Planning:** Dynamically partitions ambiguous tasks into an actionable sequence of subtasks.
-  - **Grounded Tool Execution:** Invokes live Knowledge Base search, order lookup, and refund authorization.
-  - **State & Context Memory:** Maintains continuous telemetry of thoughts, actions, and observations across steps.
-  - **Safeguarded Human Escalation:** Automatically generates Tier-2 incident packets with urgency ratings and SLA targets.
+- **Title:** Why Unstructured Goals Fail in Single-Call LLMs
+- **Left Column (Traditional One-Shot LLM Failures):**
+  - **Unstructured Paragraph Dumps:** Produces vague essays lacking sequential order, timestamps, or milestone checkpoints.
+  - **Zero Constraint Verification:** Never calculates whether a $1,200 budget or 3-day window can realistically cover the itinerary.
+  - **Blind to Dependency Blockers:** Schedules downstream actions before prerequisites are confirmed (e.g. touring before transit).
+  - **No Operational Safeguards:** Ignores weather contingencies, booking lead times, and failure points.
+- **Right Column (Autonomous Task Planner Solution):**
+  - **Decomposed Multi-Phase Breakdown:** Generates discrete, numbered sub-tasks with duration estimates and explicit deliverables.
+  - **Feasibility Auditing:** Tests timeline and budget limits against domain benchmarks with feasibility scoring (0-100).
+  - **Critical Path Analysis:** Maps dependency chains (`TASK-01 ➔ TASK-02`) and highlights bottlenecks.
+  - **Deterministic Risk Mitigation:** Injects automated contingency protocols for each identified operational failure point.
 
 > **Speaker Notes:**  
-> *"Traditional chatbots either answer with ungrounded text or get stuck in rigid decision trees. Our agent bridges this gap: it behaves as an autonomous operator that reasons about what policy applies, inspects real customer purchase telemetry, calculates whether an item is within the 30-day window, and either resolves the issue autonomously or escalates with full context."*
+> *"When a human asks an LLM to 'plan a 3-day trip' or 'launch an MVP', a standard model vomits generic paragraphs. It doesn't check if the budget adds up, doesn't identify what must happen first, and doesn't prepare for risks. Our agent treats goals as engineering problems: decomposing requirements, verifying feasibility, and mapping dependencies."*
 
 ---
 
-## 🏗️ Slide 3: System Architecture & The ReAct Workflow
+## 🏗️ Slide 3: System Architecture & ReAct Workflow
 - **Header:** 02 / Architecture & Flow
 - **Title:** System Architecture: Plan → Act → Observe → Respond
 - **4-Stage Pipeline:**
-  1. **PLAN (Task Decomposition):**  
-     Extracts customer entities (Order ID, Email, Item SKU) and formulates an ordered multi-step action plan.
-  2. **ACT (Tool Execution):**  
-     Selects and calls specialized tools (`search_knowledge_base`, `lookup_customer_order`, `check_refund_eligibility`).
-  3. **OBSERVE (Feedback Accumulation):**  
-     Captures tool feedback into a typed Pydantic `AgentState` scratchpad memory.
-  4. **RESPOND (Resolution / Escalation):**  
-     Autonomously issues refunds with transaction IDs or activates the Tier-2 Human Escalation protocol.
+  1. **PLAN (Constraint Parsing):**  
+     Extracts primary goal, numerical duration, budget ceiling, and domain classification (`trip_planning`, `software_launch`, `event_management`).
+  2. **ACT (Tool Invocations):**  
+     Calls specialized tools: blueprint search, feasibility auditor, subtask decomposer, critical path scheduler.
+  3. **OBSERVE (State Scratchpad):**  
+     Accumulates structured observations and constraint checks into Pydantic `AgentState` memory.
+  4. **RESPOND (Master Plan Synthesis):**  
+     Compiles phase matrix, milestone timeline, budget breakdown, and persists plan with Plan ID.
 
 > **Speaker Notes:**  
-> *"Here is the architectural backbone. The user query enters the Planner, which decomposes the goal into discrete steps. The ReAct engine iteratively executes each step: forming a Thought, executing an Action, and logging the Observation into the scratchpad. This feedback loop dictates whether to execute the next tool or finalize resolution."*
+> *"Here is our core state machine. Notice how the agent transitions across phases: starting with constraint parsing, cycling through tool invocations in the ReAct loop where each observation informs the next decision, and culminating in a comprehensive master plan that is persisted to storage."*
 
 ---
 
-## 🛠️ Slide 4: Autonomous Tool Suite & Escalation Safeguards
-- **Header:** 03 / Capabilities & Safety
-- **Title:** Autonomous Tool Suite & Multi-Tier Escalation Safeguards
-- **Left Column (The 6 Autonomous Tools):**
-  - `search_knowledge_base`: Keyword-weighted search across return, refund, and shipping policies.
-  - `lookup_customer_order`: Retrieves real-time delivery telemetry, carrier tracking, and purchase records.
-  - `check_refund_eligibility`: Computes date deltas between delivery and current date (30-day limit).
-  - `process_refund`: Autonomous financial ledger crediting with transaction ID generation.
-  - `escalate_to_human`: Formulates priority incident packets with SLA tracking (<15 mins).
-  - `log_support_ticket`: Permanent JSON-based CRM interaction logging.
-- **Right Column (Deterministic Escalation Triggers):**
-  - **Sentiment & Rage Detection:** Bypasses automated loops when angry, abusive, or legal threats are detected.
-  - **High-Value Exposure:** Orders over $500 with courier delays route straight to human supervisors.
-  - **Policy Exceptions:** Valid extenuating claims (hospitalization, courier error) receive priority human review.
-  - **Zero Context Loss:** Human agents receive the exact transcript, tool logs, and customer metadata.
+## 🛠️ Slide 4: Tool Suite & 3-Day Trip Benchmark
+- **Header:** 03 / Tool Suite & Benchmarks
+- **Title:** Autonomous Tool Suite & 3-Day Trip Execution Showcase
+- **Left Column (The 6 Autonomous Planning Tools):**
+  - `search_domain_blueprints`: Retrieves domain blueprints and milestone phases.
+  - `analyze_goal_feasibility`: Tests timeline feasibility and resource limits.
+  - `decompose_into_subtasks`: Generates phase-aligned, numbered sub-tasks with deliverables.
+  - `calculate_schedule_and_critical_path`: Derives sequential critical path and milestone checkpoints.
+  - `assess_risks_and_mitigations`: Identifies failure modes and injects contingency safeguards.
+  - `export_structured_plan`: Persists compiled master plan into permanent JSON records.
+- **Right Column (Benchmark: 'Plan a 3-Day Trip to Tokyo'):**
+  - **Input Goal:** *"Plan a 3-day cultural & culinary trip to Tokyo for 2 people on a $1,200 budget."*
+  - **Phase 1 Logistics:** Lodging reservation, flight transfers, local eSIM data, and IC transit card pre-orders.
+  - **Phase 2 Itinerary:** Day 1 arrival & orientation walk; Day 2 Asakusa & culinary food tour; Day 3 Meiji Shrine & market shopping.
+  - **Budget Optimization:** Allocates 35% lodging ($420), 25% transit ($300), 20% dining ($240), 12% activities ($144), 8% buffer ($96).
+  - **Risk Mitigation:** Pre-downloads offline transit maps and schedules open-date vouchers for rainy weather.
 
 > **Speaker Notes:**  
-> *"Autonomous systems must know their limits. Our agent has six focused tools, but more importantly, it has clear escalation guardrails. If a customer is furious or an order over $500 is lost, the agent doesn't give a generic response; it constructs a formal Tier-2 incident ticket with an assigned SLA and hands over the complete telemetry."*
+> *"On the right is our primary benchmark: planning a 3-day trip to Tokyo on a $1,200 budget. The agent schedules arrival logistics on Day 1, cultural landmarks on Day 2, and nature markets on Day 3, while cleanly dividing the $1,200 into lodging, transit, food, and emergency reserves with zero user intervention."*
 
 ---
 
-## 📊 Slide 5: Benchmarks, Test Coverage & Contest Compliance
+## 📊 Slide 5: Test Coverage, Tech Stack & Contest Compliance
 - **Header:** 04 / Benchmarks & Compliance
-- **Title:** Technology Stack, Test Coverage & Evaluation Summary
+- **Title:** Test Coverage, Technology Stack & Contest Compliance
 - **Verification Matrix:**
-  - **100% Automated Test Suite:** 6 passing unit tests covering policy retrieval, order parsing, refund authorization, expired return denial, and human escalation.
-  - **Dual-Engine Architecture:** Operates with live **Google Gemini API** (`gemini-1.5-flash`), and includes a built-in **Offline ReAct Engine** allowing evaluators to run the system with zero API keys.
-  - **Contest Compliance:** 100% free-tier and open-source compliant; no paid or restricted APIs used.
-  - **Dual Interfaces:** Interactive terminal CLI with colored trace panels + full Streamlit Web UI with live reasoning inspector and 1-click test scenarios.
-  - **Persistent Audit Logging:** Every ticket, transaction, and observation is persisted to disk for compliance review.
+  - **100% Automated Test Suite:** 6 automated unit tests validating blueprint search, feasibility scoring, 3-day subtask decomposition, critical path derivation, risk assessment, and end-to-end plan generation.
+  - **Strict Agentic Behavior:** Demonstrates true `Plan -> Act -> Observe -> Respond` workflow with continuous scratchpad telemetry (no single-shot prompt hacks).
+  - **Free-Tier & Zero-Key Compliance:** Supports Google Gemini API (`gemini-1.5-flash`) and features a built-in offline simulator engine so judges can run it without API keys.
+  - **Dual Operational Interfaces:** Interactive Streamlit Web UI with live reasoning inspector and 1-click test scenarios + rich terminal CLI.
+  - **Audit Trail:** Structured plan export into JSON guarantees every generated plan has a unique Plan ID (`PLAN-2026-...`) for verifiable execution.
 
 > **Speaker Notes:**  
-> *"To ensure maximum fairness and immediate grading by the Techvruk judges, the project features a dual-engine design: it supports Gemini API free tier while also running flawlessly in offline mode without requiring any credentials. With 100% automated test coverage and both CLI and Streamlit interfaces, it offers a robust, production-ready demonstration of agentic AI."*
+> *"To ensure maximum fairness and compliance with contest rules, the agent requires zero paid API keys and can be evaluated immediately using our offline simulator or the Gemini free tier. With 100% test coverage and interactive interfaces, this system represents a robust, production-ready solution to autonomous task planning."*

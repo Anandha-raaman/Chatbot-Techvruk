@@ -1,20 +1,19 @@
 """
-Autonomous Tool Registry for Customer Support & Escalation Agent.
-All tools return structured, deterministic outputs for the ReAct loop.
+Autonomous Tool Registry for Task Planner Agent.
+Provides specialized tools for goal analysis, task decomposition, scheduling, risk auditing, and export.
 """
 
 import json
 import os
+import re
 import uuid
-from datetime import datetime, date
 from typing import Dict, Any, List, Optional
+from datetime import datetime
 
-# Locate data directory relative to this file
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-KB_FILE = os.path.join(DATA_DIR, "knowledge_base.json")
-CUSTOMERS_FILE = os.path.join(DATA_DIR, "customers.json")
-TICKETS_FILE = os.path.join(DATA_DIR, "tickets.json")
+BLUEPRINTS_FILE = os.path.join(DATA_DIR, "planner_blueprints.json")
+PLANS_FILE = os.path.join(DATA_DIR, "plans.json")
 
 
 def _load_json(file_path: str) -> Any:
@@ -29,380 +28,309 @@ def _save_json(file_path: str, data: Any) -> None:
         json.dump(data, f, indent=2)
 
 
-def search_knowledge_base(query: str, category: Optional[str] = None) -> Dict[str, Any]:
+def search_domain_blueprints(domain_or_goal: str) -> Dict[str, Any]:
     """
-    Search company policy, warranty, returns, and escalation documents.
+    Search domain-specific planning templates and historical task blueprints.
     Args:
-        query: Keywords or question describing the policy needed.
-        category: Optional category filter (returns, damages, shipping, cancellations, escalations).
+        domain_or_goal: The user goal or domain name (e.g., 'trip', 'software launch', 'event').
     Returns:
-        Dict with status, match_count, and ranked relevant articles.
+        Dict with matched blueprint, standard phases, and baseline tasks.
     """
-    articles = _load_json(KB_FILE)
-    q_tokens = set(query.lower().split())
+    blueprints = _load_json(BLUEPRINTS_FILE)
+    tokens = set(re.findall(r"\w+", domain_or_goal.lower()))
 
-    scored_results = []
-    for art in articles:
-        if category and art.get("category", "").lower() != category.lower():
-            continue
+    best_match = None
+    best_score = -1
 
+    for bp in blueprints:
         score = 0
-        title_lower = art.get("title", "").lower()
-        content_lower = art.get("content", "").lower()
-        keywords = [k.lower() for k in art.get("keywords", [])]
-
-        # Calculate keyword relevance score
-        for token in q_tokens:
-            if token in title_lower:
-                score += 3
-            if token in content_lower:
-                score += 1
+        keywords = bp.get("keywords", [])
+        for t in tokens:
+            if t in bp.get("domain", ""):
+                score += 5
             for kw in keywords:
-                if token in kw:
-                    score += 4
+                if t in kw:
+                    score += 3
+        if score > best_score:
+            best_score = score
+            best_match = bp
 
-        if score > 0:
-            scored_results.append((score, art))
-
-    scored_results.sort(key=lambda x: x[0], reverse=True)
-
-    if not scored_results:
-        # Fallback to general returns policy if none matched
-        return {
-            "status": "partial_match",
-            "matches_found": 0,
-            "articles": [articles[0]] if articles else [],
-            "message": "No direct keyword match; provided standard return & refund policy."
-        }
+    if not best_match or best_score == 0:
+        # Default fallback to trip planning template if ambiguous
+        best_match = blueprints[0] if blueprints else {}
 
     return {
         "status": "success",
-        "matches_found": len(scored_results),
-        "articles": [item[1] for item in scored_results[:3]]
+        "domain": best_match.get("domain", "general_project"),
+        "blueprint_name": best_match.get("name", "Standard Project Blueprint"),
+        "phases": best_match.get("phases", []),
+        "budget_allocation_pct": best_match.get("budget_allocation_pct", {}),
+        "typical_risks": best_match.get("typical_risks", [])
     }
 
 
-def lookup_customer_order(order_id: Optional[str] = None, email: Optional[str] = None) -> Dict[str, Any]:
+def analyze_goal_feasibility(goal: str, timeline_days: int = 3, budget: Optional[float] = None) -> Dict[str, Any]:
     """
-    Look up customer account, purchase history, and shipping status.
+    Evaluate scope, timeline, and budget feasibility.
     Args:
-        order_id: Specific order identifier (e.g., ORD-89421).
-        email: Customer's email address.
+        goal: Stated objective.
+        timeline_days: Available days/duration.
+        budget: Stated budget if provided.
     Returns:
-        Dict containing customer profile and matching order details.
+        Feasibility score (0-100), risk status, and scope recommendations.
     """
-    customers = _load_json(CUSTOMERS_FILE)
+    score = 90
+    warnings = []
+    recommendations = []
 
-    target_customer = None
-    target_order = None
+    # Timeline constraint checks
+    if timeline_days < 1:
+        score -= 40
+        warnings.append("Timeline is too compressed (< 1 day) for meaningful execution.")
+    elif timeline_days <= 2 and any(w in goal.lower() for w in ["software", "hackathon", "conference", "erp", "enterprise", "system", "app"]):
+        score -= 30
+        warnings.append("Complex technical projects in <= 2 days face severe scope compression.")
+        recommendations.append("Limit scope to an ultra-focused prototype demonstration.")
 
-    for cust in customers:
-        if email and cust.get("email", "").lower() == email.lower():
-            target_customer = cust
-            if order_id:
-                for ord_entry in cust.get("orders", []):
-                    if ord_entry.get("order_id", "").lower() == order_id.lower():
-                        target_order = ord_entry
-                        break
+    # Budget constraint checks
+    if budget is not None:
+        if budget < 100:
+            score -= 20
+            warnings.append("Extremely tight budget; prioritize free/public transit and open-source tools.")
+        elif budget > 5000:
+            recommendations.append("High budget headroom; reserve premier experiences and comprehensive contingencies.")
+
+    feasibility_status = "Highly Feasible" if score >= 80 else ("Feasible with Scoping" if score >= 60 else "High Risk / Constrained")
+
+    return {
+        "feasibility_score": max(0, min(100, score)),
+        "status": feasibility_status,
+        "timeline_days": timeline_days,
+        "budget": budget,
+        "warnings": warnings,
+        "recommendations": recommendations
+    }
+
+
+def decompose_into_subtasks(goal: str, domain: str, timeline_days: int = 3, pace: str = "moderate") -> Dict[str, Any]:
+    """
+    Deconstruct goal into chronologically ordered, phase-aligned subtasks with dependency tags.
+    """
+    blueprint_res = search_domain_blueprints(domain)
+    phases = blueprint_res.get("phases", [])
+
+    generated_subtasks = []
+    task_counter = 1
+
+    # Specific handling for Trip Planning (e.g. 3-day trip)
+    if "trip" in domain or any(k in goal.lower() for k in ["trip", "vacation", "tokyo", "paris", "bali", "tour", "travel"]):
+        # Phase 1: Planning & Logistics
+        generated_subtasks.append({
+            "task_id": f"TASK-0{task_counter}",
+            "phase": "Phase 1: Pre-Departure Logistics",
+            "title": "Finalize transit tickets, airport transfers & book central accommodations",
+            "estimated_duration": "4 Hours",
+            "priority": "High",
+            "dependencies": [],
+            "deliverable": "Confirmed booking vouchers & arrival itinerary"
+        })
+        task_counter += 1
+
+        generated_subtasks.append({
+            "task_id": f"TASK-0{task_counter}",
+            "phase": "Phase 1: Pre-Departure Logistics",
+            "title": "Secure local eSIM/mobile data and pre-order regional transit passes",
+            "estimated_duration": "1 Hour",
+            "priority": "Medium",
+            "dependencies": ["TASK-01"],
+            "deliverable": "Active connectivity & digital transit cards"
+        })
+        task_counter += 1
+
+        # Phase 2: Daily Itineraries based on timeline_days
+        for day in range(1, timeline_days + 1):
+            if day == 1:
+                title = "Day 1: Arrival, neighborhood orientation walk, and signature welcome dinner"
+            elif day == 2:
+                title = "Day 2: Morning cultural heritage landmarks, afternoon museums & evening food tour"
+            elif day == 3:
+                title = "Day 3: Scenic outdoor/nature exploration, artisan market shopping & farewell dinner"
             else:
-                target_order = cust.get("orders", [])[0] if cust.get("orders") else None
-            break
+                title = f"Day {day}: Extended excursion, specialty workshops, and regional sightseeing"
 
-        if order_id:
-            for ord_entry in cust.get("orders", []):
-                if ord_entry.get("order_id", "").lower() == order_id.lower():
-                    target_customer = cust
-                    target_order = ord_entry
-                    break
-        if target_order:
-            break
+            generated_subtasks.append({
+                "task_id": f"TASK-0{task_counter}",
+                "phase": f"Phase 2: Day {day} Execution",
+                "title": title,
+                "estimated_duration": "Full Day (8-10 Hours)",
+                "priority": "High",
+                "dependencies": [f"TASK-0{task_counter - 1}"],
+                "deliverable": f"Completed Day {day} experiential itinerary"
+            })
+            task_counter += 1
 
-    if not target_order:
-        return {
-            "status": "not_found",
-            "message": f"No order found matching query (Order ID: {order_id}, Email: {email}).",
-            "order": None
-        }
+        # Phase 3: Departure Logistics
+        generated_subtasks.append({
+            "task_id": f"TASK-0{task_counter}",
+            "phase": "Phase 3: Wrap-Up & Departure",
+            "title": "Pack souvenirs, settle lodging expenses & execute return transit transfer",
+            "estimated_duration": "3 Hours",
+            "priority": "Medium",
+            "dependencies": [f"TASK-0{task_counter - 1}"],
+            "deliverable": "Smooth checkout and return departure"
+        })
+
+    else:
+        # General Software / Event / Project decomposition
+        for p_idx, phase in enumerate(phases):
+            p_name = phase.get("phase_name", f"Phase {p_idx+1}")
+            for t_idx, standard_t in enumerate(phase.get("standard_tasks", [])):
+                dep = [f"TASK-0{task_counter-1}"] if task_counter > 1 else []
+                generated_subtasks.append({
+                    "task_id": f"TASK-0{task_counter}",
+                    "phase": p_name,
+                    "title": standard_t,
+                    "estimated_duration": "1-2 Days" if timeline_days > 7 else "3-5 Hours",
+                    "priority": "High" if t_idx == 0 else "Medium",
+                    "dependencies": dep,
+                    "deliverable": f"Completed deliverable for {standard_t[:30]}..."
+                })
+                task_counter += 1
 
     return {
         "status": "success",
-        "customer": {
-            "customer_id": target_customer["customer_id"],
-            "name": target_customer["name"],
-            "tier": target_customer.get("tier", "Standard"),
-            "email": target_customer["email"]
-        },
-        "order": target_order
+        "total_subtasks": len(generated_subtasks),
+        "subtasks": generated_subtasks
     }
 
 
-def check_refund_eligibility(order_id: str, item_id: Optional[str] = None, reason: str = "Unspecified") -> Dict[str, Any]:
+def calculate_schedule_and_critical_path(subtasks: List[Dict[str, Any]], timeline_days: int = 3) -> Dict[str, Any]:
     """
-    Evaluate company return policy against order delivery date and item condition.
-    Args:
-        order_id: The order ID to check.
-        item_id: Specific item ID within the order (optional).
-        reason: Stated reason for return/refund.
-    Returns:
-        Dict with eligibility boolean, days elapsed, policy applied, and reason.
+    Calculate critical path and parallel execution tracks across the schedule.
     """
-    lookup = lookup_customer_order(order_id=order_id)
-    if lookup["status"] != "success":
-        return {
-            "eligible": False,
-            "reason": f"Order {order_id} not found in database."
-        }
-
-    order = lookup["order"]
-    delivery_date_str = order.get("delivery_date")
-    status = order.get("status")
-
-    if not delivery_date_str:
-        if "delayed" in status.lower() or "transit" in status.lower():
-            return {
-                "eligible": True,
-                "type": "carrier_delay_investigation",
-                "days_since_delivery": None,
-                "policy": "KB-004: Shipping Delays & Carrier Trace",
-                "recommendation": "Package still in transit. Initiate carrier trace or offer priority reshipment."
-            }
-        return {
-            "eligible": False,
-            "reason": f"Order has not been delivered yet (Current Status: {status})."
-        }
-
-    delivery_date = datetime.strptime(delivery_date_str, "%Y-%m-%d").date()
-    # Assume reference date is current contest window (Sept 2026)
-    today = date(2026, 9, 25)
-    days_elapsed = (today - delivery_date).days
-
-    if days_elapsed <= 30:
-        return {
-            "eligible": True,
-            "days_since_delivery": days_elapsed,
-            "policy": "KB-001: Standard 30-Day Return Window",
-            "refund_window_days": 30,
-            "action": "Autonomous Refund Authorized",
-            "message": f"Order delivered {days_elapsed} days ago (within 30-day window). Eligible for full refund or exchange."
-        }
-    else:
-        return {
-            "eligible": False,
-            "days_since_delivery": days_elapsed,
-            "policy": "KB-001: Standard 30-Day Return Window",
-            "refund_window_days": 30,
-            "action": "Policy Exception Required",
-            "message": f"Order delivered {days_elapsed} days ago, exceeding the 30-day limit. Standard autonomous return is closed. Requires supervisor or human escalation if extenuating circumstances exist."
-        }
-
-
-def process_refund(order_id: str, item_id: Optional[str] = None, amount: Optional[float] = None, reason: str = "") -> Dict[str, Any]:
-    """
-    Execute autonomous refund against payment processor and update customer order record.
-    Args:
-        order_id: Order ID to refund.
-        item_id: Item ID to refund.
-        amount: Amount to refund (defaults to total order amount if omitted).
-        reason: Justification recorded for accounting.
-    Returns:
-        Dict with transaction ID, refunded amount, and updated order status.
-    """
-    customers = _load_json(CUSTOMERS_FILE)
-    refund_record = None
-
-    for cust in customers:
-        for ord_entry in cust.get("orders", []):
-            if ord_entry.get("order_id", "").lower() == order_id.lower():
-                refund_amount = amount if amount is not None else ord_entry.get("total_amount", 0.0)
-                txn_id = f"TXN-REF-{uuid.uuid4().hex[:8].upper()}"
-
-                ord_entry["refund_status"] = "Refunded"
-                ord_entry["refund_txn_id"] = txn_id
-                ord_entry["refund_amount"] = refund_amount
-                ord_entry["refund_date"] = datetime.now().strftime("%Y-%m-%d")
-
-                refund_record = {
-                    "status": "success",
-                    "transaction_id": txn_id,
-                    "order_id": order_id,
-                    "customer_name": cust["name"],
-                    "refunded_amount": refund_amount,
-                    "payment_method": ord_entry.get("payment_method"),
-                    "reason": reason,
-                    "estimated_arrival": "3-5 business days"
-                }
-                break
-        if refund_record:
-            break
-
-    if refund_record:
-        _save_json(CUSTOMERS_FILE, customers)
-        return refund_record
+    critical_path = [t["task_id"] for t in subtasks if t.get("priority") == "High"]
+    
+    # Identify milestones
+    milestones = []
+    if subtasks:
+        milestones.append({"milestone": "Logistics & Readiness Milestone", "target_day": "Day 1 (Morning)"})
+        halfway = max(1, timeline_days // 2)
+        milestones.append({"milestone": "Midpoint Core Execution Checkpoint", "target_day": f"Day {halfway}"})
+        milestones.append({"milestone": "Final Completion & Wrap-Up", "target_day": f"Day {timeline_days}"})
 
     return {
-        "status": "failed",
-        "message": f"Could not process refund for order {order_id}. Order not found."
+        "status": "success",
+        "critical_path": critical_path,
+        "critical_task_count": len(critical_path),
+        "milestones": milestones,
+        "recommended_pace": "Optimized Sequential Pipeline"
     }
 
 
-def escalate_to_human(customer_name: str, email: str, issue_summary: str, urgency: str = "normal", sentiment: str = "neutral") -> Dict[str, Any]:
+def assess_risks_and_mitigations(goal: str, domain: str) -> Dict[str, Any]:
     """
-    Trigger Tier-2 Human Support Escalation protocol.
-    Creates an urgent incident packet for a human supervisor.
-    Args:
-        customer_name: Full name of customer.
-        email: Contact email.
-        issue_summary: Comprehensive synopsis of customer issue and agent actions taken.
-        urgency: Level ('low', 'normal', 'high', 'critical').
-        sentiment: Observed sentiment ('neutral', 'frustrated', 'distressed', 'angry').
-    Returns:
-        Dict containing escalation ticket reference, SLA target, and assigned team.
+    Identify high-impact operational risks and inject contingency protocols.
     """
-    ticket_id = f"ESC-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-
-    sla_map = {
-        "critical": 10,
-        "high": 15,
-        "normal": 60,
-        "low": 120
-    }
-    sla_mins = sla_map.get(urgency.lower(), 30)
-
-    escalation_payload = {
-        "ticket_id": ticket_id,
-        "type": "HUMAN_ESCALATION_TIER2",
-        "customer_name": customer_name,
-        "email": email,
-        "urgency": urgency.upper(),
-        "sentiment": sentiment.upper(),
-        "summary": issue_summary,
-        "assigned_queue": "Priority Incident Resolution Team",
-        "sla_target_minutes": sla_mins,
-        "created_at": datetime.now().isoformat(),
-        "status": "Assigned to Human Specialist"
-    }
-
-    # Persist into tickets store
-    tickets = _load_json(TICKETS_FILE)
-    tickets.append(escalation_payload)
-    _save_json(TICKETS_FILE, tickets)
+    bp = search_domain_blueprints(domain)
+    risks = bp.get("typical_risks", [])
 
     return {
-        "status": "escalated",
-        "ticket_id": ticket_id,
-        "assigned_to": "Tier-2 Human Specialist",
-        "urgency": urgency,
-        "sla_minutes": sla_mins,
-        "message": f"Incident successfully escalated to a Human Specialist under Ticket #{ticket_id}. Expected response within {sla_mins} minutes."
+        "status": "success",
+        "identified_risks_count": len(risks),
+        "risk_matrix": risks
     }
 
 
-def log_support_ticket(customer_name: str, email: str, category: str, description: str, resolution_status: str) -> Dict[str, Any]:
+def export_structured_plan(plan_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Log general support conversation into permanent CRM archive.
+    Persist structured plan into permanent storage.
     """
-    ticket_id = f"TCK-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-    ticket = {
-        "ticket_id": ticket_id,
-        "type": "STANDARD_SUPPORT_TICKET",
-        "customer_name": customer_name,
-        "email": email,
-        "category": category,
-        "description": description,
-        "resolution_status": resolution_status,
-        "created_at": datetime.now().isoformat()
-    }
-    tickets = _load_json(TICKETS_FILE)
-    tickets.append(ticket)
-    _save_json(TICKETS_FILE, tickets)
+    plan_id = f"PLAN-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+    plan_data["plan_id"] = plan_id
+    plan_data["saved_at"] = datetime.now().isoformat()
+
+    plans = _load_json(PLANS_FILE)
+    plans.append(plan_data)
+    _save_json(PLANS_FILE, plans)
 
     return {
-        "status": "logged",
-        "ticket_id": ticket_id,
-        "timestamp": ticket["created_at"]
+        "status": "exported",
+        "plan_id": plan_id,
+        "message": f"Plan successfully compiled and saved with ID {plan_id}."
     }
 
 
-# Tool Definitions Metadata for LLM Tool Calling (Gemini Function Declarations)
 TOOL_METADATA = [
     {
-        "name": "search_knowledge_base",
-        "description": "Searches the official corporate knowledge base for return, refund, shipping, warranty, and escalation policies.",
+        "name": "search_domain_blueprints",
+        "description": "Searches domain templates (trips, software launches, events) for standard phases and typical task structures.",
         "parameters": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "The search query, topic, or policy keyword."},
-                "category": {"type": "string", "description": "Optional category filter: returns, damages, shipping, cancellations, escalations."}
+                "domain_or_goal": {"type": "string", "description": "Goal description or domain name."}
             },
-            "required": ["query"]
+            "required": ["domain_or_goal"]
         }
     },
     {
-        "name": "lookup_customer_order",
-        "description": "Retrieves real-time order status, tracking info, delivery dates, and purchased items by Order ID or email.",
+        "name": "analyze_goal_feasibility",
+        "description": "Evaluates feasibility of goal against timeline constraints and budget limits.",
         "parameters": {
             "type": "object",
             "properties": {
-                "order_id": {"type": "string", "description": "The order ID such as ORD-89421 or ORD-77312."},
-                "email": {"type": "string", "description": "The customer's registered email address."}
-            }
+                "goal": {"type": "string", "description": "Primary goal to analyze."},
+                "timeline_days": {"type": "integer", "description": "Total duration in days."},
+                "budget": {"type": "number", "description": "Budget limit if specified."}
+            },
+            "required": ["goal"]
         }
     },
     {
-        "name": "check_refund_eligibility",
-        "description": "Evaluates return eligibility by checking delivery dates against the 30-day window policy and item conditions.",
+        "name": "decompose_into_subtasks",
+        "description": "Breaks down a goal into phase-aligned, sequential subtasks with duration estimates and dependencies.",
         "parameters": {
             "type": "object",
             "properties": {
-                "order_id": {"type": "string", "description": "The order ID to verify."},
-                "item_id": {"type": "string", "description": "Specific item ID (optional)."},
-                "reason": {"type": "string", "description": "Reason for return or refund request."}
+                "goal": {"type": "string", "description": "The user's goal."},
+                "domain": {"type": "string", "description": "Matched domain."},
+                "timeline_days": {"type": "integer", "description": "Duration in days."}
             },
-            "required": ["order_id"]
+            "required": ["goal", "domain"]
         }
     },
     {
-        "name": "process_refund",
-        "description": "Executes an approved refund transaction for an eligible order and updates order accounting status.",
+        "name": "calculate_schedule_and_critical_path",
+        "description": "Determines the critical path, milestones, and schedule dependencies across subtasks.",
         "parameters": {
             "type": "object",
             "properties": {
-                "order_id": {"type": "string", "description": "The order ID to refund."},
-                "item_id": {"type": "string", "description": "Optional specific item ID."},
-                "amount": {"type": "number", "description": "Refund amount."},
-                "reason": {"type": "string", "description": "Documented reason for the refund."}
+                "subtasks": {"type": "array", "description": "List of decomposed subtasks."},
+                "timeline_days": {"type": "integer", "description": "Duration in days."}
             },
-            "required": ["order_id"]
+            "required": ["subtasks"]
         }
     },
     {
-        "name": "escalate_to_human",
-        "description": "Escalates complex, high-value, or distressed customer inquiries to a Tier-2 Human Support Specialist with priority SLA.",
+        "name": "assess_risks_and_mitigations",
+        "description": "Audits operational risks and generates concrete mitigation safeguards.",
         "parameters": {
             "type": "object",
             "properties": {
-                "customer_name": {"type": "string", "description": "Name of customer."},
-                "email": {"type": "string", "description": "Customer contact email."},
-                "issue_summary": {"type": "string", "description": "Detailed synopsis of the issue and why human escalation is required."},
-                "urgency": {"type": "string", "description": "Urgency level: low, normal, high, critical."},
-                "sentiment": {"type": "string", "description": "Customer sentiment: neutral, frustrated, distressed, angry."}
+                "goal": {"type": "string", "description": "Stated goal."},
+                "domain": {"type": "string", "description": "Identified domain."}
             },
-            "required": ["customer_name", "email", "issue_summary"]
+            "required": ["goal", "domain"]
         }
     },
     {
-        "name": "log_support_ticket",
-        "description": "Logs the completed customer interaction into CRM records with final resolution details.",
+        "name": "export_structured_plan",
+        "description": "Saves and exports the finalized structured plan object to persistent storage.",
         "parameters": {
             "type": "object",
             "properties": {
-                "customer_name": {"type": "string", "description": "Customer's name."},
-                "email": {"type": "string", "description": "Customer's email address."},
-                "category": {"type": "string", "description": "Ticket category (e.g., Refund, Inquiry, Shipping)."},
-                "description": {"type": "string", "description": "Summary of the request."},
-                "resolution_status": {"type": "string", "description": "Final resolution status."}
+                "plan_data": {"type": "object", "description": "Complete structured plan dictionary."}
             },
-            "required": ["customer_name", "email", "category", "description", "resolution_status"]
+            "required": ["plan_data"]
         }
     }
 ]

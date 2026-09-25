@@ -1,0 +1,407 @@
+[
+  {
+    "goal_title": "Plan a 3-day cultural and culinary trip to Tokyo on a $1,200 budget for 2 people",
+    "domain": "trip_planning",
+    "timeline_days": 3,
+    "total_budget": 1200.0,
+    "subtasks": [
+      {
+        "task_id": "TASK-01",
+        "phase": "Phase 1: Pre-Departure Logistics",
+        "title": "Finalize transit tickets, airport transfers & book central accommodations",
+        "estimated_duration": "4 Hours",
+        "priority": "High",
+        "dependencies": [],
+        "deliverable": "Confirmed booking vouchers & arrival itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-02",
+        "phase": "Phase 1: Pre-Departure Logistics",
+        "title": "Secure local eSIM/mobile data and pre-order regional transit passes",
+        "estimated_duration": "1 Hour",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-01"
+        ],
+        "deliverable": "Active connectivity & digital transit cards",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-03",
+        "phase": "Phase 2: Day 1 Execution",
+        "title": "Day 1: Arrival, neighborhood orientation walk, and signature welcome dinner",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-02"
+        ],
+        "deliverable": "Completed Day 1 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-04",
+        "phase": "Phase 2: Day 2 Execution",
+        "title": "Day 2: Morning cultural heritage landmarks, afternoon museums & evening food tour",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-03"
+        ],
+        "deliverable": "Completed Day 2 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-05",
+        "phase": "Phase 2: Day 3 Execution",
+        "title": "Day 3: Scenic outdoor/nature exploration, artisan market shopping & farewell dinner",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-04"
+        ],
+        "deliverable": "Completed Day 3 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-06",
+        "phase": "Phase 3: Wrap-Up & Departure",
+        "title": "Pack souvenirs, settle lodging expenses & execute return transit transfer",
+        "estimated_duration": "3 Hours",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-05"
+        ],
+        "deliverable": "Smooth checkout and return departure",
+        "status": "pending"
+      }
+    ],
+    "critical_path": [
+      "TASK-01",
+      "TASK-03",
+      "TASK-04",
+      "TASK-05"
+    ],
+    "risks": [
+      {
+        "risk": "Inclement weather disrupting outdoor walking tours",
+        "severity": "Medium",
+        "mitigation_strategy": "Schedule flexible museum/indoor passes with open-date vouchers."
+      },
+      {
+        "risk": "Sold-out tickets for major landmarks",
+        "severity": "High",
+        "mitigation_strategy": "Reserve skip-the-line timed entry tickets at least 2 weeks in advance."
+      },
+      {
+        "risk": "Transit navigation confusion or delays",
+        "severity": "Low",
+        "mitigation_strategy": "Pre-download offline transit maps and regional metro navigation apps."
+      }
+    ],
+    "budget_breakdown": [
+      {
+        "category": "Lodging",
+        "percentage": 35.0,
+        "estimated_amount": 420.0,
+        "notes": "35% of overall estimated budget"
+      },
+      {
+        "category": "Transportation",
+        "percentage": 25.0,
+        "estimated_amount": 300.0,
+        "notes": "25% of overall estimated budget"
+      },
+      {
+        "category": "Dining",
+        "percentage": 20.0,
+        "estimated_amount": 240.0,
+        "notes": "20% of overall estimated budget"
+      },
+      {
+        "category": "Activities And Tickets",
+        "percentage": 12.0,
+        "estimated_amount": 144.0,
+        "notes": "12% of overall estimated budget"
+      },
+      {
+        "category": "Emergency Buffer",
+        "percentage": 8.0,
+        "estimated_amount": 96.0,
+        "notes": "8% of overall estimated budget"
+      }
+    ],
+    "plan_id": "PLAN-20260925-8630F7",
+    "saved_at": "2026-09-25T21:45:14.529994"
+  },
+  {
+    "goal_title": "Plan a 3-day cultural and culinary trip to Tokyo on a $1,200 budget for 2 people",
+    "domain": "trip_planning",
+    "timeline_days": 3,
+    "total_budget": 1200.0,
+    "subtasks": [
+      {
+        "task_id": "TASK-01",
+        "phase": "Phase 1: Pre-Departure Logistics",
+        "title": "Finalize transit tickets, airport transfers & book central accommodations",
+        "estimated_duration": "4 Hours",
+        "priority": "High",
+        "dependencies": [],
+        "deliverable": "Confirmed booking vouchers & arrival itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-02",
+        "phase": "Phase 1: Pre-Departure Logistics",
+        "title": "Secure local eSIM/mobile data and pre-order regional transit passes",
+        "estimated_duration": "1 Hour",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-01"
+        ],
+        "deliverable": "Active connectivity & digital transit cards",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-03",
+        "phase": "Phase 2: Day 1 Execution",
+        "title": "Day 1: Arrival, neighborhood orientation walk, and signature welcome dinner",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-02"
+        ],
+        "deliverable": "Completed Day 1 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-04",
+        "phase": "Phase 2: Day 2 Execution",
+        "title": "Day 2: Morning cultural heritage landmarks, afternoon museums & evening food tour",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-03"
+        ],
+        "deliverable": "Completed Day 2 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-05",
+        "phase": "Phase 2: Day 3 Execution",
+        "title": "Day 3: Scenic outdoor/nature exploration, artisan market shopping & farewell dinner",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-04"
+        ],
+        "deliverable": "Completed Day 3 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-06",
+        "phase": "Phase 3: Wrap-Up & Departure",
+        "title": "Pack souvenirs, settle lodging expenses & execute return transit transfer",
+        "estimated_duration": "3 Hours",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-05"
+        ],
+        "deliverable": "Smooth checkout and return departure",
+        "status": "pending"
+      }
+    ],
+    "critical_path": [
+      "TASK-01",
+      "TASK-03",
+      "TASK-04",
+      "TASK-05"
+    ],
+    "risks": [
+      {
+        "risk": "Inclement weather disrupting outdoor walking tours",
+        "severity": "Medium",
+        "mitigation_strategy": "Schedule flexible museum/indoor passes with open-date vouchers."
+      },
+      {
+        "risk": "Sold-out tickets for major landmarks",
+        "severity": "High",
+        "mitigation_strategy": "Reserve skip-the-line timed entry tickets at least 2 weeks in advance."
+      },
+      {
+        "risk": "Transit navigation confusion or delays",
+        "severity": "Low",
+        "mitigation_strategy": "Pre-download offline transit maps and regional metro navigation apps."
+      }
+    ],
+    "budget_breakdown": [
+      {
+        "category": "Lodging",
+        "percentage": 35.0,
+        "estimated_amount": 420.0,
+        "notes": "35% of overall estimated budget"
+      },
+      {
+        "category": "Transportation",
+        "percentage": 25.0,
+        "estimated_amount": 300.0,
+        "notes": "25% of overall estimated budget"
+      },
+      {
+        "category": "Dining",
+        "percentage": 20.0,
+        "estimated_amount": 240.0,
+        "notes": "20% of overall estimated budget"
+      },
+      {
+        "category": "Activities And Tickets",
+        "percentage": 12.0,
+        "estimated_amount": 144.0,
+        "notes": "12% of overall estimated budget"
+      },
+      {
+        "category": "Emergency Buffer",
+        "percentage": 8.0,
+        "estimated_amount": 96.0,
+        "notes": "8% of overall estimated budget"
+      }
+    ],
+    "plan_id": "PLAN-20260925-3F547D",
+    "saved_at": "2026-09-25T21:45:33.435601"
+  },
+  {
+    "goal_title": "Plan a 3-day cultural and culinary trip to Tokyo on a $1,200 budget for 2 people",
+    "domain": "trip_planning",
+    "timeline_days": 3,
+    "total_budget": 1200.0,
+    "subtasks": [
+      {
+        "task_id": "TASK-01",
+        "phase": "Phase 1: Pre-Departure Logistics",
+        "title": "Finalize transit tickets, airport transfers & book central accommodations",
+        "estimated_duration": "4 Hours",
+        "priority": "High",
+        "dependencies": [],
+        "deliverable": "Confirmed booking vouchers & arrival itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-02",
+        "phase": "Phase 1: Pre-Departure Logistics",
+        "title": "Secure local eSIM/mobile data and pre-order regional transit passes",
+        "estimated_duration": "1 Hour",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-01"
+        ],
+        "deliverable": "Active connectivity & digital transit cards",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-03",
+        "phase": "Phase 2: Day 1 Execution",
+        "title": "Day 1: Arrival, neighborhood orientation walk, and signature welcome dinner",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-02"
+        ],
+        "deliverable": "Completed Day 1 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-04",
+        "phase": "Phase 2: Day 2 Execution",
+        "title": "Day 2: Morning cultural heritage landmarks, afternoon museums & evening food tour",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-03"
+        ],
+        "deliverable": "Completed Day 2 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-05",
+        "phase": "Phase 2: Day 3 Execution",
+        "title": "Day 3: Scenic outdoor/nature exploration, artisan market shopping & farewell dinner",
+        "estimated_duration": "Full Day (8-10 Hours)",
+        "priority": "High",
+        "dependencies": [
+          "TASK-04"
+        ],
+        "deliverable": "Completed Day 3 experiential itinerary",
+        "status": "pending"
+      },
+      {
+        "task_id": "TASK-06",
+        "phase": "Phase 3: Wrap-Up & Departure",
+        "title": "Pack souvenirs, settle lodging expenses & execute return transit transfer",
+        "estimated_duration": "3 Hours",
+        "priority": "Medium",
+        "dependencies": [
+          "TASK-05"
+        ],
+        "deliverable": "Smooth checkout and return departure",
+        "status": "pending"
+      }
+    ],
+    "critical_path": [
+      "TASK-01",
+      "TASK-03",
+      "TASK-04",
+      "TASK-05"
+    ],
+    "risks": [
+      {
+        "risk": "Inclement weather disrupting outdoor walking tours",
+        "severity": "Medium",
+        "mitigation_strategy": "Schedule flexible museum/indoor passes with open-date vouchers."
+      },
+      {
+        "risk": "Sold-out tickets for major landmarks",
+        "severity": "High",
+        "mitigation_strategy": "Reserve skip-the-line timed entry tickets at least 2 weeks in advance."
+      },
+      {
+        "risk": "Transit navigation confusion or delays",
+        "severity": "Low",
+        "mitigation_strategy": "Pre-download offline transit maps and regional metro navigation apps."
+      }
+    ],
+    "budget_breakdown": [
+      {
+        "category": "Lodging",
+        "percentage": 35.0,
+        "estimated_amount": 420.0,
+        "notes": "35% of overall estimated budget"
+      },
+      {
+        "category": "Transportation",
+        "percentage": 25.0,
+        "estimated_amount": 300.0,
+        "notes": "25% of overall estimated budget"
+      },
+      {
+        "category": "Dining",
+        "percentage": 20.0,
+        "estimated_amount": 240.0,
+        "notes": "20% of overall estimated budget"
+      },
+      {
+        "category": "Activities And Tickets",
+        "percentage": 12.0,
+        "estimated_amount": 144.0,
+        "notes": "12% of overall estimated budget"
+      },
+      {
+        "category": "Emergency Buffer",
+        "percentage": 8.0,
+        "estimated_amount": 96.0,
+        "notes": "8% of overall estimated budget"
+      }
+    ],
+    "plan_id": "PLAN-20260925-F1D441",
+    "saved_at": "2026-09-25T21:48:21.151282"
+  }
+]

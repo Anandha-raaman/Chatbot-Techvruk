@@ -1,6 +1,8 @@
 """
-Core Agentic Workflow Engine for Techvruk AI Contest.
+Core Autonomous Task Planner Agent Engine for Techvruk AI Contest.
 Implements the explicit ReAct pattern: Plan -> Act -> Observe -> Respond.
+Given a user goal (e.g., 'plan a 3-day trip' or 'launch an MVP in 4 weeks'),
+autonomously breaks it into sub-tasks and generates a comprehensive structured plan.
 """
 
 import os
@@ -9,23 +11,24 @@ import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from .state import AgentState, PlanStep, AgentAction, EscalationDetail
+from .state import AgentState, StructuredPlan, SubTask, RiskItem, BudgetAllocation, AgentAction
 from .tools import (
-    search_knowledge_base,
-    lookup_customer_order,
-    check_refund_eligibility,
-    process_refund,
-    escalate_to_human,
-    log_support_ticket,
+    search_domain_blueprints,
+    analyze_goal_feasibility,
+    decompose_into_subtasks,
+    calculate_schedule_and_critical_path,
+    assess_risks_and_mitigations,
+    export_structured_plan,
     TOOL_METADATA
 )
 
 
-class SupportAgent:
+class TaskPlannerAgent:
     """
-    Autonomous Customer Support & Escalation Agent.
-    Deconstructs tasks into multi-step plans, invokes tools, maintains state,
-    and handles dynamic escalation logic.
+    Autonomous Task Planner Agent.
+    Deconstructs high-level user goals into structured, phased sub-tasks,
+    audits feasibility, determines critical paths, assigns mitigations,
+    and compiles deterministic execution plans.
     """
 
     def __init__(self, api_key: Optional[str] = None, model_name: str = "gemini-1.5-flash"):
@@ -33,344 +36,247 @@ class SupportAgent:
         self.model_name = model_name
         self.has_llm = bool(self.api_key)
 
-    def run(self, user_query: str, session_id: Optional[str] = None) -> AgentState:
+    def run(self, user_goal: str, session_id: Optional[str] = None) -> AgentState:
         """
         Execute full agentic cycle: Plan -> Act -> Observe -> Respond.
         """
         session_id = session_id or f"sess-{uuid.uuid4().hex[:8]}"
         state = AgentState(
             session_id=session_id,
-            user_query=user_query,
+            user_goal=user_goal,
             status="planning"
         )
 
-        # 1. PHASE 1: PLANNING
-        plan = self._generate_plan(user_query)
-        state.plan = plan
+        # 1. PHASE 1: CONSTRAINT PARSING & DOMAIN DETECTION
+        constraints = self._extract_constraints(user_goal)
+        state.parsed_constraints = constraints
         state.status = "executing"
 
-        # 2. PHASE 2: ACT & OBSERVE (The ReAct Loop)
+        # 2. PHASE 2: REACT EXECUTION LOOP (Act -> Observe -> Reason)
         self._execute_react_loop(state)
 
-        # 3. PHASE 3: FINAL RESPONSE GENERATION
+        # 3. PHASE 3: FINAL STRUCTURED SYNTHESIS
         final_answer = self._generate_final_response(state)
         state.final_response = final_answer
-        state.status = "escalated" if state.escalation.is_escalated else "completed"
+        state.status = "completed"
 
         return state
 
-    def _generate_plan(self, query: str) -> List[PlanStep]:
+    def _extract_constraints(self, goal: str) -> Dict[str, Any]:
         """
-        Decompose the user goal into a sequence of logical steps.
+        Extract numerical duration, budget, and domain entities from goal text.
         """
-        plan_steps = []
-        lower_q = query.lower()
+        lower = goal.lower()
 
-        # Step 1: Query & Entity Extraction
-        plan_steps.append(PlanStep(
-            step_id=1,
-            description="Analyze user query, identify customer intent, and extract relevant entities (Order ID, Email, Item).",
-            tool_hint="entity_parser"
-        ))
+        # Extract days/duration
+        days = 3  # default
+        days_match = re.search(r"(\d+)\s*(?:-| )(?:day|days)", lower)
+        week_match = re.search(r"(\d+)\s*(?:-| )(?:week|weeks)", lower)
+        month_match = re.search(r"(\d+)\s*(?:-| )(?:month|months)", lower)
 
-        # Step 2: Policy & Knowledge Base Check
-        plan_steps.append(PlanStep(
-            step_id=2,
-            description="Search official knowledge base to retrieve applicable policies, warranties, or refund windows.",
-            tool_hint="search_knowledge_base"
-        ))
+        if days_match:
+            days = int(days_match.group(1))
+        elif week_match:
+            days = int(week_match.group(1)) * 7
+        elif month_match:
+            days = int(month_match.group(1)) * 30
 
-        # Step 3: Order & Customer Profile Lookup
-        if any(term in lower_q for term in ["ord-", "order", "bought", "purchased", "tracking", "refund", "return", "status", "cancel"]):
-            plan_steps.append(PlanStep(
-                step_id=3,
-                description="Retrieve customer profile, order history, delivery verification, and tracking data.",
-                tool_hint="lookup_customer_order"
-            ))
+        # Extract budget ($1200 or 1200 dollars)
+        budget = None
+        budget_match = re.search(r"\$\s*([0-9,]+)", goal) or re.search(r"([0-9,]+)\s*(?:dollars|usd|budget)", lower)
+        if budget_match:
+            try:
+                budget = float(budget_match.group(1).replace(",", ""))
+            except ValueError:
+                budget = None
 
-        # Step 4: Eligibility & Rule Evaluation
-        if any(term in lower_q for term in ["refund", "return", "money back", "replace", "damaged", "broken"]):
-            plan_steps.append(PlanStep(
-                step_id=4,
-                description="Evaluate return eligibility against the 30-day delivery policy and item condition.",
-                tool_hint="check_refund_eligibility"
-            ))
+        # Detect domain
+        domain = "trip_planning"
+        if any(w in lower for w in ["trip", "vacation", "tokyo", "paris", "bali", "tour", "travel", "flight", "hotel"]):
+            domain = "trip_planning"
+        elif any(w in lower for w in ["software", "mvp", "app", "saas", "code", "dev", "feature", "build", "frontend"]):
+            domain = "software_launch"
+        elif any(w in lower for w in ["hackathon", "event", "conference", "summit", "meetup", "workshop"]):
+            domain = "event_management"
 
-        # Step 5: Execution or Escalation
-        plan_steps.append(PlanStep(
-            step_id=5,
-            description="Execute authorized action (e.g. process refund, record carrier trace) or trigger Human Escalation if criteria met.",
-            tool_hint="process_refund / escalate_to_human"
-        ))
-
-        # Step 6: CRM Logging & Resolution
-        plan_steps.append(PlanStep(
-            step_id=6,
-            description="Persist transaction details into permanent CRM records and synthesize user response.",
-            tool_hint="log_support_ticket"
-        ))
-
-        return plan_steps
+        return {
+            "timeline_days": days,
+            "budget": budget,
+            "domain": domain
+        }
 
     def _execute_react_loop(self, state: AgentState) -> None:
         """
-        Executes the reasoning, tool calling, and observation accumulation loop.
+        ReAct Execution: iteratively calls tools, collects observations, and updates state.
         """
-        query = state.user_query
-        lower_q = query.lower()
+        goal = state.user_goal
+        c = state.parsed_constraints
+        domain = c["domain"]
+        timeline_days = c["timeline_days"]
+        budget = c["budget"]
 
-        # Extract entities via regex
-        order_match = re.search(r"ORD-\d+", query, re.IGNORECASE)
-        email_match = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", query)
+        # --- STEP 1: Search Domain Blueprints ---
+        thought_1 = f"I need to query domain blueprints for '{domain}' to identify standard milestone phases and structure."
+        bp_obs = search_domain_blueprints(domain_or_goal=goal)
+        state.add_action(
+            thought=thought_1,
+            action_name="search_domain_blueprints",
+            action_input={"domain_or_goal": goal},
+            observation=bp_obs
+        )
 
-        order_id = order_match.group(0).upper() if order_match else None
-        email = email_match.group(0).lower() if email_match else None
+        # --- STEP 2: Analyze Goal Feasibility ---
+        thought_2 = f"Assessing feasibility of goal over {timeline_days} days with a target budget of ${budget if budget else 'Flexible'}."
+        feas_obs = analyze_goal_feasibility(goal=goal, timeline_days=timeline_days, budget=budget)
+        state.add_action(
+            thought=thought_2,
+            action_name="analyze_goal_feasibility",
+            action_input={"goal": goal, "timeline_days": timeline_days, "budget": budget},
+            observation=feas_obs
+        )
 
-        state.identified_order_id = order_id
+        # --- STEP 3: Decompose into Subtasks ---
+        thought_3 = f"Deconstructing goal into actionable, phase-aligned subtasks with dependency tagging and duration estimates."
+        decomp_obs = decompose_into_subtasks(goal=goal, domain=domain, timeline_days=timeline_days)
+        state.add_action(
+            thought=thought_3,
+            action_name="decompose_into_subtasks",
+            action_input={"goal": goal, "domain": domain, "timeline_days": timeline_days},
+            observation=decomp_obs
+        )
+        raw_subtasks = decomp_obs.get("subtasks", [])
 
-        # Detect sentiment & urgency
-        urgency = "normal"
-        sentiment = "neutral"
-        if any(w in lower_q for w in ["furious", "unacceptable", "lawyer", "scam", "sue", "legal", "terrible", "fraud"]):
-            sentiment = "angry"
-            urgency = "critical"
-        elif any(w in lower_q for w in ["urgent", "asap", "emergency", "immediately", "frustrated", "delayed"]):
-            sentiment = "frustrated"
-            urgency = "high"
+        # --- STEP 4: Calculate Critical Path & Schedule ---
+        thought_4 = "Calculating critical path, execution dependencies, and milestone checkpoints across subtasks."
+        sched_obs = calculate_schedule_and_critical_path(subtasks=raw_subtasks, timeline_days=timeline_days)
+        state.add_action(
+            thought=thought_4,
+            action_name="calculate_schedule_and_critical_path",
+            action_input={"subtasks_count": len(raw_subtasks), "timeline_days": timeline_days},
+            observation=sched_obs
+        )
 
-        # --- STEP 1: Search Knowledge Base ---
-        step1 = next((s for s in state.plan if s.tool_hint == "search_knowledge_base"), None)
-        if step1:
-            step1.status = "in_progress"
-            thought = "I need to check the company's knowledge base to understand the exact policy rules applicable to the user's issue."
-            kb_res = search_knowledge_base(query=query)
-            state.add_action(
-                thought=thought,
-                action_name="search_knowledge_base",
-                action_input={"query": query},
-                observation=kb_res
-            )
-            step1.status = "completed"
+        # --- STEP 5: Assess Risks & Mitigations ---
+        thought_5 = "Evaluating operational failure points and injecting concrete mitigation safeguards."
+        risk_obs = assess_risks_and_mitigations(goal=goal, domain=domain)
+        state.add_action(
+            thought=thought_5,
+            action_name="assess_risks_and_mitigations",
+            action_input={"goal": goal, "domain": domain},
+            observation=risk_obs
+        )
 
-        # --- STEP 2: Lookup Customer Order (if relevant) ---
-        step2 = next((s for s in state.plan if s.tool_hint == "lookup_customer_order"), None)
-        order_data = None
-        customer_data = None
+        # Compile Budget Breakdown
+        alloc_pct = bp_obs.get("budget_allocation_pct", {})
+        base_budget = budget or (1200.0 if domain == "trip_planning" else 2500.0)
+        budget_items = []
+        for cat, pct in alloc_pct.items():
+            budget_items.append(BudgetAllocation(
+                category=cat.replace("_", " ").title(),
+                percentage=pct,
+                estimated_amount=round((pct / 100.0) * base_budget, 2),
+                notes=f"{pct}% of overall estimated budget"
+            ))
 
-        if step2:
-            step2.status = "in_progress"
-            thought = f"Looking up customer order details for Order ID '{order_id}' or Email '{email}' to verify purchase date and delivery status."
-            order_res = lookup_customer_order(order_id=order_id, email=email)
-            state.add_action(
-                thought=thought,
-                action_name="lookup_customer_order",
-                action_input={"order_id": order_id, "email": email},
-                observation=order_res
-            )
-            if order_res.get("status") == "success":
-                order_data = order_res.get("order")
-                customer_data = order_res.get("customer")
-                state.identified_customer_id = customer_data.get("customer_id")
-            step2.status = "completed"
+        # Build SubTask models
+        subtask_models = [SubTask(**t) for t in raw_subtasks]
+        risk_models = [RiskItem(risk=r["risk"], severity=r["severity"], mitigation_strategy=r["mitigation"]) for r in risk_obs.get("risk_matrix", [])]
 
-        # --- STEP 3: Policy Eligibility Check ---
-        step3 = next((s for s in state.plan if s.tool_hint == "check_refund_eligibility"), None)
-        eligibility_data = None
+        structured_plan_data = {
+            "goal_title": goal,
+            "domain": domain,
+            "timeline_days": timeline_days,
+            "total_budget": base_budget,
+            "subtasks": [s.model_dump() for s in subtask_models],
+            "critical_path": sched_obs.get("critical_path", []),
+            "risks": [r.model_dump() for r in risk_models],
+            "budget_breakdown": [b.model_dump() for b in budget_items]
+        }
 
-        if step3:
-            step3.status = "in_progress"
-            if order_data:
-                target_order_id = order_data.get("order_id")
-                thought = f"Evaluating return/refund eligibility for {target_order_id} based on delivery date {order_data.get('delivery_date')} against the 30-day window policy."
-                eligibility_data = check_refund_eligibility(order_id=target_order_id, reason=query)
-                state.add_action(
-                    thought=thought,
-                    action_name="check_refund_eligibility",
-                    action_input={"order_id": target_order_id, "reason": query},
-                    observation=eligibility_data
-                )
-                step3.status = "completed"
-            else:
-                thought = "Cannot verify refund eligibility because no specific order ID was provided or located."
-                state.add_action(
-                    thought=thought,
-                    action_name="check_refund_eligibility",
-                    action_input={"query": query},
-                    observation={"eligible": False, "reason": "Order lookup required first."}
-                )
-                step3.status = "failed"
+        # --- STEP 6: Export Plan to Permanent Record ---
+        thought_6 = "Exporting and persisting compiled structured plan object into permanent CRM / database records."
+        export_obs = export_structured_plan(structured_plan_data)
+        state.add_action(
+            thought=thought_6,
+            action_name="export_structured_plan",
+            action_input={"goal": goal},
+            observation=export_obs
+        )
 
-        # --- STEP 4: Action Execution OR Human Escalation ---
-        step4 = next((s for s in state.plan if "escalate_to_human" in s.tool_hint or "process_refund" in s.tool_hint), None)
-        if step4:
-            step4.status = "in_progress"
-
-            # Check if escalation conditions are triggered:
-            # 1. Customer is distressed/angry or mentions legal/fraud
-            # 2. High value order (> $500) with carrier delays
-            # 3. Policy denied refund but extenuating circumstances claimed
-            # 4. Explicit request for human/manager
-            needs_escalation = (
-                sentiment in ["angry", "frustrated"] or
-                urgency in ["critical", "high"] or
-                any(t in lower_q for t in ["talk to human", "real person", "escalate", "manager", "supervisor"]) or
-                (order_data and order_data.get("total_amount", 0) > 500 and "delayed" in str(order_data.get("status")).lower()) or
-                (eligibility_data and not eligibility_data.get("eligible") and any(w in lower_q for w in ["hospital", "emergency", "stolen", "unfair"]))
-            )
-
-            if needs_escalation:
-                cust_name = customer_data.get("name") if customer_data else (email or "Valued Customer")
-                cust_email = customer_data.get("email") if customer_data else (email or "customer@example.com")
-                thought = f"Escalation trigger activated: Customer exhibits {sentiment} sentiment with {urgency} urgency. Routing to Tier-2 Human Specialist per Protocol KB-006."
-
-                summary_text = (
-                    f"Customer: {cust_name} ({cust_email})\n"
-                    f"Order: {order_id or 'N/A'}\n"
-                    f"User Query: {query}\n"
-                    f"Findings: Order Status={order_data.get('status') if order_data else 'Unknown'}. "
-                    f"Eligibility={eligibility_data.get('message') if eligibility_data else 'N/A'}."
-                )
-
-                esc_res = escalate_to_human(
-                    customer_name=cust_name,
-                    email=cust_email,
-                    issue_summary=summary_text,
-                    urgency=urgency,
-                    sentiment=sentiment
-                )
-
-                state.add_action(
-                    thought=thought,
-                    action_name="escalate_to_human",
-                    action_input={"customer_name": cust_name, "email": cust_email, "urgency": urgency, "sentiment": sentiment},
-                    observation=esc_res
-                )
-
-                state.escalation = EscalationDetail(
-                    is_escalated=True,
-                    urgency=urgency,
-                    sentiment=sentiment,
-                    escalation_reason=f"Triggered by sentiment '{sentiment}' or complex policy exception.",
-                    ticket_id=esc_res.get("ticket_id"),
-                    sla_minutes=esc_res.get("sla_minutes", 15)
-                )
-
-            elif eligibility_data and eligibility_data.get("eligible") and any(w in lower_q for w in ["refund", "money back", "cancel"]):
-                # Autonomous refund execution
-                target_order_id = order_data["order_id"]
-                refund_amount = order_data.get("total_amount")
-                thought = f"Order {target_order_id} is verified as delivered within 30 days. Policy KB-001 authorizes autonomous refund of ${refund_amount}."
-
-                refund_res = process_refund(
-                    order_id=target_order_id,
-                    amount=refund_amount,
-                    reason=f"Customer request: {query[:50]}"
-                )
-
-                state.add_action(
-                    thought=thought,
-                    action_name="process_refund",
-                    action_input={"order_id": target_order_id, "amount": refund_amount},
-                    observation=refund_res
-                )
-
-            step4.status = "completed"
-
-        # --- STEP 5: Log Permanent CRM Record ---
-        step5 = next((s for s in state.plan if s.tool_hint == "log_support_ticket"), None)
-        if step5:
-            step5.status = "in_progress"
-            thought = "Recording interaction and outcome into persistent CRM ticketing system."
-            cust_name = customer_data.get("name") if customer_data else "Guest Customer"
-            cust_email = customer_data.get("email") if customer_data else (email or "guest@example.com")
-            cat = "Refund" if "refund" in lower_q else ("Escalation" if state.escalation.is_escalated else "Inquiry")
-
-            ticket_res = log_support_ticket(
-                customer_name=cust_name,
-                email=cust_email,
-                category=cat,
-                description=query[:150],
-                resolution_status="Escalated to Human" if state.escalation.is_escalated else "Resolved Autonomously"
-            )
-
-            state.add_action(
-                thought=thought,
-                action_name="log_support_ticket",
-                action_input={"customer_name": cust_name, "category": cat},
-                observation=ticket_res
-            )
-            step5.status = "completed"
+        # Update state with plan
+        structured_plan_data["plan_id"] = export_obs.get("plan_id", "PLAN-GEN")
+        state.structured_plan = StructuredPlan(
+            plan_id=export_obs.get("plan_id", "PLAN-GEN"),
+            goal_title=goal,
+            domain=domain,
+            timeline_days=timeline_days,
+            total_budget=base_budget,
+            subtasks=subtask_models,
+            critical_path=sched_obs.get("critical_path", []),
+            risks=risk_models,
+            budget_breakdown=budget_items
+        )
 
     def _generate_final_response(self, state: AgentState) -> str:
         """
-        Synthesize tool observations into a coherent, professional response.
+        Synthesize the structured plan into an executive, presentation-grade response.
         """
-        # Collect actions
-        actions = {a.action_name: a.observation for a in state.scratchpad}
+        p = state.structured_plan
+        c = state.parsed_constraints
 
-        # Scenario 1: Escalated to Human Agent
-        if state.escalation.is_escalated:
-            esc = state.escalation
-            esc_obs = actions.get("escalate_to_human", {})
-            order_obs = actions.get("lookup_customer_order", {}).get("order", {})
+        # Build task list by phase
+        phases_map: Dict[str, List[SubTask]] = {}
+        for task in p.subtasks:
+            phases_map.setdefault(task.phase, []).append(task)
 
-            return (
-                f"### 🛡️ Priority Support Escalation Notice\n\n"
-                f"Dear Customer,\n\n"
-                f"I have reviewed your inquiry regarding "
-                f"{('Order **' + str(order_obs.get('order_id')) + '**') if order_obs else 'your account'}. "
-                f"Because your situation requires specialized attention, I have formally escalated your case directly to our **{esc.assigned_tier}**.\n\n"
-                f"**Escalation Summary:**\n"
-                f"- **Incident Ticket ID:** `{esc.ticket_id}`\n"
-                f"- **Priority Level:** `{esc.urgency.upper()}`\n"
-                f"- **Target Response SLA:** Under **{esc.sla_minutes} minutes**\n"
-                f"- **Assigned Team:** Priority Incident Resolution Team\n\n"
-                f"A Senior Support Specialist is already reviewing the full dialogue transcript and order telemetry. You will receive an immediate update at your registered contact address."
-            )
+        task_sections = []
+        for phase_name, tasks in phases_map.items():
+            task_lines = [f"#### 📍 {phase_name}"]
+            for t in tasks:
+                p_icon = "🔴" if t.priority == "High" else "🟡"
+                deps = f" *(Depends on `{', '.join(t.dependencies)}`)*" if t.dependencies else ""
+                task_lines.append(f"- **`{t.task_id}` {p_icon} {t.title}** ({t.estimated_duration}){deps}")
+                task_lines.append(f"  *Deliverable:* {t.deliverable}")
+            task_sections.append("\n".join(task_lines))
 
-        # Scenario 2: Autonomous Refund Processed
-        if "process_refund" in actions and actions["process_refund"].get("status") == "success":
-            ref = actions["process_refund"]
-            return (
-                f"### ✅ Refund Successfully Processed\n\n"
-                f"Good news! We have processed your refund request autonomously in accordance with our **30-Day Return & Refund Policy (KB-001)**.\n\n"
-                f"**Transaction Breakdown:**\n"
-                f"- **Order ID:** `{ref.get('order_id')}`\n"
-                f"- **Refund Amount:** **${ref.get('refunded_amount', 0.0):.2f}**\n"
-                f"- **Payment Method Credited:** {ref.get('payment_method')}\n"
-                f"- **Transaction Reference:** `{ref.get('transaction_id')}`\n"
-                f"- **Estimated Credit Time:** {ref.get('estimated_arrival', '3-5 business days')}\n\n"
-                f"You will receive a confirmation email shortly with full banking details."
-            )
+        tasks_md = "\n\n".join(task_sections)
 
-        # Scenario 3: Order Status / Shipping Inquiry
-        if "lookup_customer_order" in actions and actions["lookup_customer_order"].get("status") == "success":
-            ord_data = actions["lookup_customer_order"]["order"]
-            items_str = ", ".join([f"{i['name']} (x{i['quantity']})" for i in ord_data.get("items", [])])
-            return (
-                f"### 📦 Order & Shipping Details\n\n"
-                f"Here is the real-time telemetry for **Order `{ord_data.get('order_id')}`**:\n\n"
-                f"- **Current Status:** `{ord_data.get('status')}`\n"
-                f"- **Carrier:** {ord_data.get('carrier')} (Tracking: `{ord_data.get('tracking_number')}`)\n"
-                f"- **Order Date:** {ord_data.get('order_date')}\n"
-                f"- **Delivery Date:** {ord_data.get('delivery_date') or 'Pending Delivery'}\n"
-                f"- **Items:** {items_str}\n"
-                f"- **Total Amount:** ${ord_data.get('total_amount'):.2f}\n\n"
-                f"Please let me know if you would like to initiate an exchange, return, or request further delivery assistance."
-            )
+        # Build Budget Table
+        budget_rows = []
+        for b in p.budget_breakdown:
+            budget_rows.append(f"| {b.category} | {b.percentage}% | **${b.estimated_amount:,.2f}** | {b.notes} |")
+        budget_md = "\n".join(budget_rows)
 
-        # Scenario 4: General Knowledge Base Response
-        if "search_knowledge_base" in actions and actions["search_knowledge_base"].get("articles"):
-            articles = actions["search_knowledge_base"]["articles"]
-            primary_art = articles[0]
-            return (
-                f"### 📋 {primary_art.get('title')}\n\n"
-                f"{primary_art.get('content')}\n\n"
-                f"*(Policy Reference: `{primary_art.get('id')}`)*\n\n"
-                f"If you have a specific order number (e.g., `ORD-89421`), please provide it so I can verify your account telemetry directly."
-            )
+        # Build Risk Table
+        risk_rows = []
+        for r in p.risks:
+            s_badge = f"`{r.severity.upper()}`"
+            risk_rows.append(f"| {r.risk} | {s_badge} | {r.mitigation_strategy} |")
+        risk_md = "\n".join(risk_rows)
 
         return (
-            "I have logged your inquiry into our support system. Please provide an Order ID (e.g. `ORD-89421`) "
-            "or contact email so I can assist you with real-time order and policy actions."
+            f"### 📋 Autonomous Master Execution Plan: `{p.plan_id}`\n\n"
+            f"> **Primary Goal:** *\"{p.goal_title}\"*\n"
+            f"> **Domain:** `{p.domain.upper()}` | **Timeline:** **{p.timeline_days} Days** | **Estimated Budget:** **${p.total_budget:,.2f}**\n\n"
+            f"---\n\n"
+            f"### 🎯 Decomposed Sub-Task Roadmap\n\n"
+            f"{tasks_md}\n\n"
+            f"---\n\n"
+            f"### ⚡ Critical Path & Milestone Schedule\n"
+            f"- **Critical Sequential Path:** `{' ➔ '.join(p.critical_path)}`\n"
+            f"- **Key Milestone 1 (Day 1):** Pre-departure logistics & baseline setup verified.\n"
+            f"- **Key Milestone 2 (Midpoint):** Core execution underway with zero dependency blockers.\n"
+            f"- **Key Milestone 3 (Final Day):** Full objective fulfilled, artifacts persisted, and wrap-up verified.\n\n"
+            f"---\n\n"
+            f"### 💰 Resource & Budget Allocation (${p.total_budget:,.2f})\n\n"
+            f"| Expense Category | Allocation % | Estimated Cost | Notes |\n"
+            f"|:---|:---:|:---:|:---|\n"
+            f"{budget_md}\n\n"
+            f"---\n\n"
+            f"### 🛡️ Risk Audit & Contingency Matrix\n\n"
+            f"| Identified Risk | Severity | Automated Mitigation Protocol |\n"
+            f"|:---|:---:|:---|\n"
+            f"{risk_md}\n\n"
+            f"---\n\n"
+            f"✅ **Plan Status:** Compiled and archived into persistent memory as `{p.plan_id}`. Ready for immediate execution."
         )

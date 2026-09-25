@@ -1,0 +1,128 @@
+[
+  {
+    "domain": "trip_planning",
+    "name": "Multi-Day Travel & Trip Planner Blueprint",
+    "keywords": ["trip", "vacation", "travel", "holiday", "getaway", "visit", "tour", "itinerary", "days trip"],
+    "phases": [
+      {
+        "phase_name": "Phase 1: Pre-Departure & Logistics",
+        "standard_tasks": [
+          "Confirm travel dates, passport/visa requirements, and destination entry advisories.",
+          "Book round-trip transportation (flights, train passes, or rental vehicle).",
+          "Reserve centrally located accommodations matching budget tier (hotel, boutique inn, or apartment).",
+          "Acquire local transit passes, mobile eSIM/data connectivity, and currency exchange."
+        ]
+      },
+      {
+        "phase_name": "Phase 2: Daily Itinerary & Experience Scheduling",
+        "standard_tasks": [
+          "Day 1: Arrival, check-in, neighborhood orientation walk, and signature local dinner.",
+          "Day 2: Morning cultural heritage landmarks, afternoon museum/art exploration, and evening culinary food tour.",
+          "Day 3: Scenic outdoor/nature excursion, souvenir shopping in historic artisan markets, and farewell dinner."
+        ]
+      },
+      {
+        "phase_name": "Phase 3: Contingency, Packing & Departure Logistics",
+        "standard_tasks": [
+          "Curate packing checklist tailored to regional weather forecast.",
+          "Identify backup indoor activities in case of inclement weather.",
+          "Arrange airport/station return transfers and prepare checkout checklist."
+        ]
+      }
+    ],
+    "budget_allocation_pct": {
+      "lodging": 35,
+      "transportation": 25,
+      "dining": 20,
+      "activities_and_tickets": 12,
+      "emergency_buffer": 8
+    },
+    "typical_risks": [
+      {"risk": "Inclement weather disrupting outdoor walking tours", "severity": "Medium", "mitigation": "Schedule flexible museum/indoor passes with open-date vouchers."},
+      {"risk": "Sold-out tickets for major landmarks", "severity": "High", "mitigation": "Reserve skip-the-line timed entry tickets at least 2 weeks in advance."},
+      {"risk": "Transit navigation confusion or delays", "severity": "Low", "mitigation": "Pre-download offline transit maps and regional metro navigation apps."}
+    ]
+  },
+  {
+    "domain": "software_launch",
+    "name": "SaaS Product MVP & Software Launch Blueprint",
+    "keywords": ["software", "mvp", "app", "saas", "develop", "launch", "code", "product", "platform", "build"],
+    "phases": [
+      {
+        "phase_name": "Phase 1: Architecture & Core Prototype",
+        "standard_tasks": [
+          "Define product requirements document (PRD) and core user journey wireframes.",
+          "Setup repository, CI/CD pipeline, database schemas, and authentication scaffolding.",
+          "Implement the primary core feature workflow with minimal viable UX."
+        ]
+      },
+      {
+        "phase_name": "Phase 2: Integration, Guardrails & Testing",
+        "standard_tasks": [
+          "Integrate payment gateway (Stripe) and subscription webhook handlers.",
+          "Implement telemetry logging, error boundary monitoring, and input validation guardrails.",
+          "Execute automated end-to-end user journey tests and load stress tests."
+        ]
+      },
+      {
+        "phase_name": "Phase 3: Deployment, Documentation & Beta Launch",
+        "standard_tasks": [
+          "Deploy production build to managed cloud hosting with SSL and custom domain.",
+          "Write technical user documentation, FAQ, and onboarding walkthrough.",
+          "Onboard first cohort of beta testers, gather feedback metrics, and triage critical bugs."
+        ]
+      }
+    ],
+    "budget_allocation_pct": {
+      "cloud_infrastructure": 30,
+      "developer_tooling_apis": 35,
+      "marketing_launch": 25,
+      "buffer_contingency": 10
+    },
+    "typical_risks": [
+      {"risk": "Scope creep delaying milestone release", "severity": "High", "mitigation": "Enforce strict feature freeze; push non-core items to v1.1 backlog."},
+      {"risk": "Third-party API rate limit bottlenecks", "severity": "Medium", "mitigation": "Implement client-side caching (Redis) and exponential backoff retries."}
+    ]
+  },
+  {
+    "domain": "event_management",
+    "name": "Technical Event & Hackathon Blueprint",
+    "keywords": ["event", "hackathon", "conference", "workshop", "meetup", "seminar", "summit", "organize"],
+    "phases": [
+      {
+        "phase_name": "Phase 1: Concept, Venue & Sponsorship",
+        "standard_tasks": [
+          "Draft event agenda, judging rubric, and participant eligibility rules.",
+          "Secure venue / streaming infrastructure and audio-visual tech support.",
+          "Outreach to sponsors for prize pool, API credits, and judge recruitment."
+        ]
+      },
+      {
+        "phase_name": "Phase 2: Registrations, Promotion & Logistics",
+        "standard_tasks": [
+          "Launch registration portal and promotional social campaign.",
+          "Procure catering, participant swag, badges, and high-speed Wi-Fi provisioning.",
+          "Host pre-event info session and publish mentor office-hours schedule."
+        ]
+      },
+      {
+        "phase_name": "Phase 3: Execution, Judging & Retrospective",
+        "standard_tasks": [
+          "Conduct opening keynote, team formation, and live challenge kickoff.",
+          "Facilitate mentor check-in rounds and project submission deadline.",
+          "Run demo pitch evaluations, announce winners, and distribute digital certificates."
+        ]
+      }
+    ],
+    "budget_allocation_pct": {
+      "venue_and_catering": 45,
+      "prizes_and_swag": 30,
+      "av_and_marketing": 15,
+      "emergency_buffer": 10
+    },
+    "typical_risks": [
+      {"risk": "Network connectivity failure during live demos", "severity": "Critical", "mitigation": "Provision dedicated redundant 5G cellular hotspot backup."},
+      {"risk": "Participant no-shows impacting team balance", "severity": "Medium", "mitigation": "Over-admit by 20% and run a guided team formation mixer at kickoff."}
+    ]
+  }
+]

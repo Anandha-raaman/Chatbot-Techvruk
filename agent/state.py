@@ -1,5 +1,5 @@
 """
-Agent State Models for Techvruk AI Agentic System.
+Pydantic State Context Models for Techvruk Task Planner Agent.
 Maintains structured context across the Plan -> Act -> Observe -> Respond lifecycle.
 """
 
@@ -8,47 +8,66 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 
+class SubTask(BaseModel):
+    """Discrete, actionable sub-task within the structured plan."""
+    task_id: str
+    phase: str
+    title: str
+    estimated_duration: str
+    priority: str = "Medium"  # High, Medium, Low
+    dependencies: List[str] = Field(default_factory=list)
+    deliverable: str = ""
+    status: str = "pending"
+
+
+class RiskItem(BaseModel):
+    """Identified risk and mitigation safeguard."""
+    risk: str
+    severity: str  # Critical, High, Medium, Low
+    mitigation_strategy: str
+
+
+class BudgetAllocation(BaseModel):
+    """Categorized financial or resource allocation."""
+    category: str
+    percentage: float
+    estimated_amount: float
+    notes: str = ""
+
+
+class StructuredPlan(BaseModel):
+    """Final, comprehensive structured plan object."""
+    plan_id: str
+    goal_title: str
+    domain: str
+    timeline_days: int
+    total_budget: Optional[float] = None
+    subtasks: List[SubTask] = Field(default_factory=list)
+    critical_path: List[str] = Field(default_factory=list)
+    risks: List[RiskItem] = Field(default_factory=list)
+    budget_breakdown: List[BudgetAllocation] = Field(default_factory=list)
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
 class AgentAction(BaseModel):
-    """Record of an executed tool action and observation in the ReAct loop."""
+    """Telemetry record of a single ReAct tool execution."""
     step_num: int
-    thought: str = Field(description="Agent's reasoning behind choosing this action")
-    action_name: str = Field(description="Name of the tool invoked")
-    action_input: Dict[str, Any] = Field(default_factory=dict, description="Parameters supplied to the tool")
-    observation: Any = Field(default=None, description="Raw feedback or output received from the tool")
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
-
-
-class PlanStep(BaseModel):
-    """Sub-task step within the decomposed plan."""
-    step_id: int
-    description: str
-    status: str = Field(default="pending", description="Status: pending, in_progress, completed, failed")
-    tool_hint: Optional[str] = None
-
-
-class EscalationDetail(BaseModel):
-    """Metadata recorded when a query exceeds autonomous policy or customer is distressed."""
-    is_escalated: bool = False
-    urgency: str = "normal"  # low, normal, high, critical
-    sentiment: str = "neutral"  # positive, neutral, frustrated, angry
-    escalation_reason: str = ""
-    assigned_tier: str = "Tier-2 Human Specialist"
-    sla_minutes: int = 15
-    ticket_id: Optional[str] = None
+    thought: str = Field(description="Agent's reasoning before calling tool")
+    action_name: str = Field(description="Name of the invoked tool")
+    action_input: Dict[str, Any] = Field(default_factory=dict)
+    observation: Any = Field(default=None)
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 
 class AgentState(BaseModel):
-    """State maintaining full context across multi-step execution."""
+    """Global execution state maintained across all workflow phases."""
     session_id: str
-    user_query: str
-    plan: List[PlanStep] = Field(default_factory=list)
+    user_goal: str
+    parsed_constraints: Dict[str, Any] = Field(default_factory=dict)
     scratchpad: List[AgentAction] = Field(default_factory=list)
-    identified_customer_id: Optional[str] = None
-    identified_order_id: Optional[str] = None
-    escalation: EscalationDetail = Field(default_factory=EscalationDetail)
+    structured_plan: Optional[StructuredPlan] = None
     final_response: Optional[str] = None
-    status: str = "initialized"  # initialized, planning, executing, completed, escalated
+    status: str = "initialized"  # initialized, planning, executing, completed, failed
 
     def add_action(self, thought: str, action_name: str, action_input: Dict[str, Any], observation: Any) -> AgentAction:
         action = AgentAction(
@@ -60,13 +79,3 @@ class AgentState(BaseModel):
         )
         self.scratchpad.append(action)
         return action
-
-    def get_context_summary(self) -> str:
-        """Returns a formatted summary of observations made so far."""
-        if not self.scratchpad:
-            return "No tool observations recorded yet."
-        lines = []
-        for a in self.scratchpad:
-            lines.append(f"Step {a.step_num} [{a.action_name}]: {a.thought}")
-            lines.append(f"   -> Result: {a.observation}")
-        return "\n".join(lines)

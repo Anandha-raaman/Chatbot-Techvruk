@@ -1,6 +1,6 @@
 """
-Automated 5-Slide Presentation Generator for Techvruk AI Agentic System.
-Generates 'Techvruk_Agentic_System_Presentation.pptx' using python-pptx with modern executive styling.
+Automated 5-Slide Presentation Generator for Techvruk Task Planner Agent.
+Generates 'Techvruk_Agentic_System_Presentation.pptx' using python-pptx with executive widescreen styling.
 """
 
 import os
@@ -17,7 +17,7 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
 
-    # Color Palette
+    # Executive Color Palette
     BG_DARK = RGBColor(15, 23, 42)        # Slate 900
     CARD_BG = RGBColor(30, 41, 59)        # Slate 800
     ACCENT_BLUE = RGBColor(56, 189, 248)  # Sky 400
@@ -64,21 +64,21 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
     tf1.word_wrap = True
 
     p_badge = tf1.paragraphs[0]
-    p_badge.text = "TECHVRUK AI CONTEST SUBMISSION • AGENTIC SYSTEM"
+    p_badge.text = "TECHVRUK AI CONTEST SUBMISSION • TASK PLANNER AGENT"
     p_badge.font.size = Pt(13)
     p_badge.font.bold = True
     p_badge.font.color.rgb = ACCENT_BLUE
     p_badge.space_after = Pt(14)
 
     p_main = tf1.add_paragraph()
-    p_main.text = "Autonomous Customer Support &\nIntelligent Escalation Agent"
+    p_main.text = "Autonomous Task Planner Agent\nGoal Decomposition & Execution Architecture"
     p_main.font.size = Pt(36)
     p_main.font.bold = True
     p_main.font.color.rgb = TEXT_WHITE
     p_main.space_after = Pt(16)
 
     p_sub = tf1.add_paragraph()
-    p_sub.text = "Demonstrating the Complete ReAct Agentic Cycle: Plan → Act → Observe → Respond\nWith Dynamic Multi-Tool Execution & Tier-2 Human Escalation Protocol"
+    p_sub.text = "Given an ambiguous goal (e.g. 'plan a 3-day trip'), autonomously decomposes it into phased sub-tasks,\ncomputes feasibility, critical path schedules, budget allocations, and contingency safeguards."
     p_sub.font.size = Pt(16)
     p_sub.font.color.rgb = TEXT_MUTED
     p_sub.space_after = Pt(32)
@@ -94,9 +94,9 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
     # -------------------------------------------------------------
     slide2 = prs.slides.add_slide(prs.slide_layouts[6])
     add_slide_background(slide2)
-    add_header(slide2, "The Problem: Why Single-Call Chatbots Fail in Enterprise Support", "01 / Context & Problem")
+    add_header(slide2, "The Problem: Why Unstructured Goals Fail in Single-Call LLMs", "01 / Context & Problem")
 
-    # Left Box: Traditional Chatbot Limitations
+    # Left Box: Traditional Single-Prompt LLM Failures
     box_l = slide2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
     box_l.fill.solid()
     box_l.fill.fore_color.rgb = CARD_BG
@@ -104,17 +104,17 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
     tf_l = box_l.text_frame
     tf_l.word_wrap = True
     p_lh = tf_l.paragraphs[0]
-    p_lh.text = "❌ Traditional Support Chatbots"
+    p_lh.text = "❌ One-Shot LLM Text Generation"
     p_lh.font.size = Pt(18)
     p_lh.font.bold = True
     p_lh.font.color.rgb = RGBColor(248, 113, 113)
     p_lh.space_after = Pt(12)
 
     points_l = [
-        "Brittle One-Shot Prompts: Output hallucinations without verifying actual database or live inventory records.",
-        "Static Rule Trees: Inflexible decision trees frustrate customers when non-standard edge cases occur.",
-        "No Autonomous Action: Incapable of calculating date deltas, checking policy constraints, or issuing refunds.",
-        "Blinded to Customer Distress: Fails to detect escalating rage or legal risks that require human intervention."
+        "Unstructured Paragraph Dumps: Produces vague essays lacking sequential order, timestamps, or milestone checkpoints.",
+        "Zero Constraint Verification: Never calculates whether a $1,200 budget or 3-day window can realistically cover the itinerary.",
+        "Blind to Dependency Blockers: Schedules downstream actions before prerequisites are confirmed (e.g. touring before transit).",
+        "No Operational Safeguards: Ignores weather contingencies, booking lead times, and failure points."
     ]
     for pt in points_l:
         p = tf_l.add_paragraph()
@@ -123,7 +123,7 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
         p.font.color.rgb = TEXT_WHITE
         p.space_after = Pt(10)
 
-    # Right Box: Agentic ReAct Solution
+    # Right Box: Agentic Solution
     box_r = slide2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.8), Inches(1.8), Inches(5.7), Inches(4.8))
     box_r.fill.solid()
     box_r.fill.fore_color.rgb = CARD_BG
@@ -131,17 +131,17 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
     tf_r = box_r.text_frame
     tf_r.word_wrap = True
     p_rh = tf_r.paragraphs[0]
-    p_rh.text = "✅ Our Autonomous Agentic Solution"
+    p_rh.text = "✅ Autonomous Task Planner Solution"
     p_rh.font.size = Pt(18)
     p_rh.font.bold = True
     p_rh.font.color.rgb = ACCENT_GREEN
     p_rh.space_after = Pt(12)
 
     points_r = [
-        "Decomposed Multi-Step Planning: Breaks complex user queries into an ordered sequence of discrete subtasks.",
-        "Tool-Use & Grounded Execution: Queries live Knowledge Base, checks customer order database, and evaluates policies.",
-        "State & Context Maintenance: Preserves full scratchpad history (Thoughts, Actions, Observations) across turns.",
-        "Deterministic Escalation Protocols: Formulates Tier-2 tickets with urgency and SLA guarantees when human touch is vital."
+        "Decomposed Multi-Phase Breakdown: Generates discrete, numbered sub-tasks with duration estimates and explicit deliverables.",
+        "Feasibility Auditing: Tests timeline and budget limits against domain benchmarks with feasibility scoring (0-100).",
+        "Critical Path Analysis: Maps dependency chains (TASK-01 ➔ TASK-02) and highlights bottlenecks.",
+        "Deterministic Risk Mitigation: Injects automated contingency protocols for each identified operational failure point."
     ]
     for pt in points_r:
         p = tf_r.add_paragraph()
@@ -151,17 +151,17 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
         p.space_after = Pt(10)
 
     # -------------------------------------------------------------
-    # SLIDE 3: System Architecture & Workflow Diagram
+    # SLIDE 3: System Architecture & ReAct Workflow
     # -------------------------------------------------------------
     slide3 = prs.slides.add_slide(prs.slide_layouts[6])
     add_slide_background(slide3)
     add_header(slide3, "System Architecture: Plan → Act → Observe → Respond", "02 / Architecture & Flow")
 
     steps_data = [
-        ("1. PLAN", "Task Decomposition", "Extracts user intent, customer entities (Order ID, Email), and formulates ordered subtasks."),
-        ("2. ACT", "Tool Dispatching", "Invokes specialized tools: search_knowledge_base, lookup_customer_order, check_eligibility."),
-        ("3. OBSERVE", "Feedback Accumulation", "Captures raw tool results into structured Pydantic AgentState scratchpad memory."),
-        ("4. RESPOND", "Resolution / Escalation", "Processes refund autonomously or triggers Tier-2 Human Escalation with SLA tracking.")
+        ("1. PLAN", "Constraint Parsing", "Extracts primary goal, numerical duration, budget ceiling, and domain classification."),
+        ("2. ACT", "Tool Invocations", "Calls specialized tools: blueprint search, feasibility auditor, subtask decomposer, critical path scheduler."),
+        ("3. OBSERVE", "State Scratchpad", "Accumulates structured observations and constraint checks into Pydantic AgentState memory."),
+        ("4. RESPOND", "Master Plan Synthesis", "Compiles phase matrix, milestone timeline, budget breakdown, and persists plan with Plan ID.")
     ]
 
     for i, (title, sub, desc) in enumerate(steps_data):
@@ -193,11 +193,11 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
         ps3.font.color.rgb = TEXT_MUTED
 
     # -------------------------------------------------------------
-    # SLIDE 4: Tool Suite & Dynamic Escalation Protocol
+    # SLIDE 4: Tool Suite & 3-Day Trip Benchmark
     # -------------------------------------------------------------
     slide4 = prs.slides.add_slide(prs.slide_layouts[6])
     add_slide_background(slide4)
-    add_header(slide4, "Autonomous Tool Suite & Multi-Tier Escalation Safeguards", "03 / Capabilities & Safety")
+    add_header(slide4, "Autonomous Tool Suite & 3-Day Trip Execution Showcase", "03 / Tool Suite & Benchmarks")
 
     # Left: Tool Ecosystem
     tool_box = slide4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
@@ -208,19 +208,19 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
     tf_t.word_wrap = True
 
     pt_h = tf_t.paragraphs[0]
-    pt_h.text = "🛠️ The 6-Tool Autonomous Ecosystem"
+    pt_h.text = "🛠️ Autonomous Planning Tools"
     pt_h.font.size = Pt(18)
     pt_h.font.bold = True
     pt_h.font.color.rgb = ACCENT_BLUE
     pt_h.space_after = Pt(10)
 
     tools_list = [
-        "search_knowledge_base: BM25 relevance ranking over return & warranty policies.",
-        "lookup_customer_order: Fetches real-time status, courier tracking, and item details.",
-        "check_refund_eligibility: Verifies delivery dates against 30-day return policy.",
-        "process_refund: Autonomous ledger crediting with transaction reference generation.",
-        "escalate_to_human: Routes priority incident packet to Tier-2 specialist.",
-        "log_support_ticket: Persistent CRM interaction archiving."
+        "search_domain_blueprints: Retrieves domain blueprints and milestone phases.",
+        "analyze_goal_feasibility: Tests timeline feasibility and resource limits.",
+        "decompose_into_subtasks: Generates phase-aligned, numbered sub-tasks with deliverables.",
+        "calculate_schedule_and_critical_path: Derives sequential critical path and milestone checkpoints.",
+        "assess_risks_and_mitigations: Identifies failure modes and injects contingency safeguards.",
+        "export_structured_plan: Persists compiled master plan into permanent JSON records."
     ]
     for tl in tools_list:
         p = tf_t.add_paragraph()
@@ -229,40 +229,41 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
         p.font.color.rgb = TEXT_WHITE
         p.space_after = Pt(6)
 
-    # Right: Human Escalation Safeguards
-    esc_box = slide4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.8), Inches(1.8), Inches(5.7), Inches(4.8))
-    esc_box.fill.solid()
-    esc_box.fill.fore_color.rgb = CARD_BG
-    esc_box.line.color.rgb = RGBColor(245, 158, 11)
-    tf_e = esc_box.text_frame
-    tf_e.word_wrap = True
+    # Right: 3-Day Trip Case Study
+    demo_box = slide4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.8), Inches(1.8), Inches(5.7), Inches(4.8))
+    demo_box.fill.solid()
+    demo_box.fill.fore_color.rgb = CARD_BG
+    demo_box.line.color.rgb = ACCENT_GREEN
+    tf_d = demo_box.text_frame
+    tf_d.word_wrap = True
 
-    pe_h = tf_e.paragraphs[0]
-    pe_h.text = "🛡️ When Does The Agent Escalate?"
-    pe_h.font.size = Pt(18)
-    pe_h.font.bold = True
-    pe_h.font.color.rgb = RGBColor(251, 191, 36)
-    pe_h.space_after = Pt(10)
+    pd_h = tf_d.paragraphs[0]
+    pd_h.text = "🌸 Benchmark: 'Plan a 3-Day Trip to Tokyo'"
+    pd_h.font.size = Pt(18)
+    pd_h.font.bold = True
+    pd_h.font.color.rgb = ACCENT_GREEN
+    pd_h.space_after = Pt(10)
 
-    esc_reasons = [
-        "Sentiment & Tone Analysis: Detects angry, distressed, or legally aggressive language and bypasses bot loop.",
-        "High-Value Financial Thresholds: Orders exceeding $500 with courier delays route to human supervisors.",
-        "Policy Exceptions & Extenuating Grounds: Expired 30-day returns with claimed hospital/courier fault are queued with incident context.",
-        "Zero Information Loss: Full transcript, tool observations, and order ID are packaged in the Tier-2 Ticket."
+    demo_pts = [
+        "Input Goal: 'Plan a 3-day cultural & culinary trip to Tokyo for 2 people on a $1,200 budget.'",
+        "Phase 1 Logistics: Lodging reservation, flight transfers, local eSIM data, and IC transit card pre-orders.",
+        "Phase 2 Itinerary: Day 1 arrival & orientation walk; Day 2 Asakusa & culinary food tour; Day 3 Meiji Shrine & market shopping.",
+        "Budget Optimization: Allocates 35% lodging ($420), 25% transit ($300), 20% dining ($240), 12% activities ($144), 8% buffer ($96).",
+        "Risk Mitigation: Pre-downloads offline transit maps and schedules open-date vouchers for rainy weather."
     ]
-    for er in esc_reasons:
-        p = tf_e.add_paragraph()
-        p.text = f"• {er}"
+    for dp in demo_pts:
+        p = tf_d.add_paragraph()
+        p.text = f"• {dp}"
         p.font.size = Pt(12)
         p.font.color.rgb = TEXT_WHITE
-        p.space_after = Pt(8)
+        p.space_after = Pt(6)
 
     # -------------------------------------------------------------
-    # SLIDE 5: Tech Stack, Benchmark Results & Conclusion
+    # SLIDE 5: Test Coverage, Tech Stack & Contest Compliance
     # -------------------------------------------------------------
     slide5 = prs.slides.add_slide(prs.slide_layouts[6])
     add_slide_background(slide5)
-    add_header(slide5, "Technology Stack, Test Coverage & Evaluation Summary", "04 / Benchmarks & Compliance")
+    add_header(slide5, "Test Coverage, Technology Stack & Contest Compliance", "04 / Benchmarks & Compliance")
 
     metrics_box = slide5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.8), Inches(11.7), Inches(4.8))
     metrics_box.fill.solid()
@@ -279,11 +280,11 @@ def create_presentation(output_path: str = "Techvruk_Agentic_System_Presentation
     pm_h.space_after = Pt(12)
 
     specs = [
-        "100% Automated Test Coverage: 6 comprehensive unit tests validating policy lookup, order verification, 30-day delta calculations, autonomous refunding, and human escalation.",
-        "Dual-Engine Flexibility: Connects to Google Gemini API (gemini-1.5-flash / gemini-2.5-flash) for live LLM reasoning, OR runs with built-in zero-key offline deterministic engine.",
-        "Fairness & Free-Tier Adherence: Complies fully with contest guidelines prohibiting paid/restricted APIs — requires zero paid tokens for complete evaluation.",
-        "Multi-Modal User Interfaces: Includes interactive CLI with rich trace visualization and a full Streamlit Web UI with live reasoning inspector and 1-click test scenarios.",
-        "Audit Trail: Structured CRM logging in JSON guarantees all actions, refund transactions, and human escalations are fully traceable."
+        "100% Automated Test Suite: 6 automated unit tests validating blueprint search, feasibility scoring, 3-day subtask decomposition, critical path derivation, risk assessment, and end-to-end plan generation.",
+        "Strict Agentic Behavior: Demonstrates true Plan -> Act -> Observe -> Respond workflow with continuous scratchpad telemetry (no single-shot prompt hacks).",
+        "Free-Tier & Zero-Key Compliance: Supports Google Gemini API (gemini-1.5-flash) and features a built-in offline simulator engine so judges can run it without API keys.",
+        "Dual Operational Interfaces: Interactive Streamlit Web UI with live reasoning inspector and 1-click test scenarios + rich terminal CLI.",
+        "Audit Trail: Structured plan export into JSON guarantees every generated plan has a unique Plan ID (PLAN-2026-...) for verifiable execution."
     ]
     for sp in specs:
         p = tf_m.add_paragraph()

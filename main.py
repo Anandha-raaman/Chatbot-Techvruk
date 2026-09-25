@@ -63,7 +63,7 @@ if __name__ == "__main__":
         interactive_mode()
     elif "--web" in args:
         print("Launching Streamlit Web Dashboard at http://localhost:8501...")
-        subprocess.run(["streamlit", "run", "app.py"])
+        subprocess.run([sys.executable, "-m", "streamlit", "run", "app.py"])
     elif "--test" in args:
         subprocess.run(["python", "-m", "unittest", "test_agent.py"])
     else:

@@ -38,13 +38,14 @@ def static_proxy(path):
     return send_from_directory(STATIC_DIR, "index.html")
 
 @app.route("/api/chat", methods=["POST"])
+@app.route("/chat", methods=["POST"])
 def chat():
     """
     Main conversational endpoint.
     Accepts natural language user input, automatically detects any task, budget,
     and currency in the background, and streams clean thinking and plan delivery.
     """
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     message = data.get("message", "").strip()
     session_id = data.get("session_id") or str(uuid.uuid4())[:8]
     api_key = data.get("api_key") or os.environ.get("GEMINI_API_KEY")
@@ -52,9 +53,7 @@ def chat():
     if not message:
         return jsonify({"error": "Message cannot be empty"}), 400
 
-    q = queue.Queue()
-
-    def worker():
+    def event_stream():
         nonlocal api_key
         try:
             # Check if user passed/pasted a Gemini API Key in the prompt
@@ -68,10 +67,7 @@ def chat():
                         f.write(f"GEMINI_API_KEY={extracted_key}\n")
                 except Exception:
                     pass
-                q.put({
-                    "type": "thought",
-                    "content": "✦ Google Gemini API Key recognized and saved! Switching directly to gemini-2.5-flash..."
-                })
+                yield f"data: {json.dumps({'type': 'thought', 'content': '✦ Google Gemini API Key recognized and saved! Switching directly to gemini-2.5-flash...'})}\n\n"
 
             session = active_sessions.get(session_id)
             current_plan = session.get("current_plan") if session else None
@@ -84,11 +80,7 @@ def chat():
                 old_curr = current_plan.get("currency", "USD")
                 sym = CurrencyConverter.get_symbol(target_curr)
 
-                q.put({
-                    "type": "thought",
-                    "content": f"Recalculating plan budget and task cost allocations from {old_curr} to {target_curr} ({sym})..."
-                })
-                time.sleep(0.3)
+                yield f"data: {json.dumps({'type': 'thought', 'content': f'Recalculating plan budget and task cost allocations from {old_curr} to {target_curr} ({sym})...'})}\n\n"
 
                 converted_plan = DynamicTaskPlanner.convert_plan_currency(current_plan, target_curr)
                 converted_plan["session_id"] = session_id
@@ -102,11 +94,7 @@ def chat():
                 fmt_res = CurrencyConverter.format(converted_plan.get('contingency_reserve', 0), target_curr)
 
                 # Emit updated plan to UI
-                q.put({
-                    "type": "plan",
-                    "data": converted_plan,
-                    "session_id": session_id
-                })
+                yield f"data: {json.dumps({'type': 'plan', 'data': converted_plan, 'session_id': session_id})}\n\n"
 
                 reply = (
                     f"✦ All budget estimates and task costs for **{converted_plan.get('title')}** have been converted to **{target_curr} ({sym})**.\n\n"
@@ -115,57 +103,31 @@ def chat():
                     f"• **Emergency Buffer (12%):** {fmt_res} {target_curr}\n\n"
                     f"The plan card above has been updated with verified {target_curr} allocations."
                 )
-                q.put({
-                    "type": "followup",
-                    "reply": reply,
-                    "session_id": session_id
-                })
+                yield f"data: {json.dumps({'type': 'followup', 'reply': reply, 'session_id': session_id})}\n\n"
 
             elif session and current_plan and not _is_new_plan_request(message):
                 # Conversational follow-up
                 plan = current_plan
                 all_plans = session.get("plans", [plan])
-                q.put({
-                    "type": "thought",
-                    "content": f"Reviewing active plan '{plan['title']}' to answer your question..."
-                })
-                time.sleep(0.3)
+                plan_title = plan.get("title", "")
+                yield f"data: {json.dumps({'type': 'thought', 'content': f'Reviewing active plan \"{plan_title}\" to answer your question...'})}\n\n"
                 reply = _generate_followup_reply(message, plan, all_plans, api_key)
-                q.put({
-                    "type": "followup",
-                    "reply": reply,
-                    "session_id": session_id
-                })
+                yield f"data: {json.dumps({'type': 'followup', 'reply': reply, 'session_id': session_id})}\n\n"
             else:
-                # New plan generation (supports multiple plans in the same chat)
+                # New plan generation
                 extracted_budget, detected_curr = DynamicTaskPlanner.extract_budget_and_currency(message)
                 sym = CurrencyConverter.get_symbol(detected_curr)
-                
-                # Stream human-friendly, clean thinking steps (NO code, NO technical tool schemas)
-                q.put({
-                    "type": "thought",
-                    "content": f"Deconstructing goal and identifying key objectives..."
-                })
-                time.sleep(0.3)
 
-                q.put({
-                    "type": "thought",
-                    "content": f"Auditing financial allocation in {detected_curr} ({sym}) with a 12% contingency buffer..."
-                })
-                time.sleep(0.3)
-
-                q.put({
-                    "type": "thought",
-                    "content": f"Structuring chronological phases, time horizons, and actionable subtasks..."
-                })
-                time.sleep(0.3)
+                yield f"data: {json.dumps({'type': 'thought', 'content': 'Deconstructing goal and identifying key objectives...'})}\n\n"
+                yield f"data: {json.dumps({'type': 'thought', 'content': f'Auditing financial allocation in {detected_curr} ({sym}) with a 12% contingency buffer...'})}\n\n"
+                yield f"data: {json.dumps({'type': 'thought', 'content': 'Structuring chronological phases, time horizons, and actionable subtasks...'})}\n\n"
 
                 # Generate the rich contextual plan using real-world LLM
                 plan = DynamicTaskPlanner.generate_plan(message, api_key=api_key)
                 plan["session_id"] = session_id
                 plan["original_query"] = message
 
-                # Save session - keep all plans so user can create multiple plans in one chat
+                # Save session
                 if session_id not in active_sessions:
                     active_sessions[session_id] = {"history": [], "current_plan": None, "plans": []}
                 active_sessions[session_id]["current_plan"] = plan
@@ -174,27 +136,20 @@ def chat():
                 active_sessions[session_id]["plans"].append(plan)
                 active_sessions[session_id]["history"].append({"user": message, "plan": plan})
 
-                q.put({
-                    "type": "plan",
-                    "data": plan,
-                    "session_id": session_id
-                })
+                yield f"data: {json.dumps({'type': 'plan', 'data': plan, 'session_id': session_id})}\n\n"
 
         except Exception as e:
-            q.put({"type": "error", "message": f"An error occurred: {str(e)}"})
-        finally:
-            q.put(None)
+            yield f"data: {json.dumps({'type': 'error', 'message': f'Planning error: {str(e)}'})}\n\n"
 
-    threading.Thread(target=worker, daemon=True).start()
-
-    def event_stream():
-        while True:
-            item = q.get()
-            if item is None:
-                break
-            yield f"data: {json.dumps(item)}\n\n"
-
-    return Response(event_stream(), mimetype="text/event-stream")
+    return Response(
+        event_stream(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive"
+        }
+    )
 
 def _detect_currency_change_intent(msg: str) -> Optional[str]:
     """

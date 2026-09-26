@@ -8,6 +8,15 @@
 
 ---
 
+## 📽️ Demo Video & Walkthrough
+
+[![Watch Demo Video](https://img.shields.io/badge/Demo%20Video-Google%20Drive-4285F4?style=for-the-badge&logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1et9eNJhL7IshKhn02RfaxsCkgChwers4/view?usp=sharing)
+
+- 📺 **Video Link**: [Click here to watch the full project demo on Google Drive](https://drive.google.com/file/d/1et9eNJhL7IshKhn02RfaxsCkgChwers4/view?usp=sharing)
+> 💡 *Full end-to-end demonstration featuring goal decomposition, 35+ global currency handling, autonomous ReAct tool calls (`CurrencyConverter`, `BudgetCalculator`, etc.), real-time SSE thought traces, interactive task checklist, and markdown/JSON export.*
+
+---
+
 ## 1. Problem Statement & Task Chosen
 
 ### The Challenge
@@ -191,6 +200,7 @@ Chatbot-Techvruk/
 | **User Interface** | Google Gemini aesthetic with floating pill composer, real-time agent trace accordion, interactive subtask checkboxes, dark/light theme, and export options. |
 | **Export Formats** | One-click copy/download as Markdown (`.md`), structured JSON (`.json`), or printer-friendly document. |
 | **Follow-up Interaction** | Interactive chat allowing users to request budget reductions, timeline accelerations, or risk mitigations dynamically. |
+| **Demo Video & Walkthrough** | [Google Drive Demo Recording](https://drive.google.com/file/d/1et9eNJhL7IshKhn02RfaxsCkgChwers4/view?usp=sharing) showing full UI, agent execution traces, and exports. |
 
 ---
 

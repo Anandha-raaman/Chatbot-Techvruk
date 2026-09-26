@@ -1,7 +1,8 @@
 # ✦ Chatbot Techvruk — Executive Presentation (5 Slides)
 
 > **File:** `Techvruk_Agentic_System_Presentation.pptx`  
-> **Format:** 16:9 Widescreen | Modern Executive Slate Theme | Card-Structured Visual Hierarchy
+> **Format:** 16:9 Widescreen | Modern Executive Slate Theme | Card-Structured Visual Hierarchy  
+> **Demo Video:** [Watch Video Walkthrough on Google Drive](https://drive.google.com/file/d/1et9eNJhL7IshKhn02RfaxsCkgChwers4/view?usp=sharing)  
 
 ---
 

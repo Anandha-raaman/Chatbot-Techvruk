@@ -1,235 +1,198 @@
-# Universal Autonomous Task Planner Agent
-### Techvruk AI Agentic System Contest Submission
+# ✦ Chatbot Techvruk - Autonomous Task Planner Agent
+### Autonomous Multi-Currency AI Agent for Dynamic Task & Project Orchestration
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Architecture](https://img.shields.io/badge/Architecture-ReAct_Agentic_Workflow-DC2626.svg)](#system-architecture--workflow-diagram)
-[![Test Suite](https://img.shields.io/badge/Tests-Passing_6%2F6-brightgreen.svg)](#testing--verification)
-[![UI](https://img.shields.io/badge/Interface-Gemini_Red_%26_White_Theme-E11D48.svg)](#running-the-project)
-[![Scope](https://img.shields.io/badge/Task_Scope-Universal_%2F_Any_Goal-red.svg)](#problem-statement--universal-scope)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-An enterprise-grade, universal AI Agentic System built to demonstrate the core principles of agentic behavior: **reasoning, multi-step planning, tool execution, and continuous state context** for **ANY arbitrary task or goal**.
-
-Directly fulfilling the official contest task requirement:
-> **"Task Planner Agent: Given a goal (e.g., 'plan a 3-day trip'), break it into sub-tasks and generate a structured plan."**
-
-Rather than being limited to hardcoded blueprints, this system operates as a **Universal Task Planner**: whether given a travel goal, software sprint, exam study plan, hackathon event, or apartment renovation, it dynamically parses intent, audits workload feasibility, deconstructs the objective into phased subtasks with dependency tags, computes critical path schedules, assesses operational risks, and exports an actionable master roadmap with a unique Plan ID (`PLAN-2026-...`).
-
-Wrapped in an **ultra-smooth Red & White Gemini-inspired user interface**.
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask Framework](https://img.shields.io/badge/Flask-3.x-black?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Agentic Pattern](https://img.shields.io/badge/Architecture-ReAct%20%2B%20Plan--and--Execute-4285F4?style=flat)](https://github.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 📌 Problem Statement & Universal Scope
+## 1. Problem Statement & Task Chosen
 
-### The Failure of One-Shot Prompting
-When a user asks a conventional LLM to plan a project (e.g. *"Plan a 3-day trip to Tokyo on a $1,200 budget"* or *"Build an AI SaaS MVP in 4 weeks"*):
-1. **Unstructured Paragraph Dumps:** Standard chatbots output walls of generic text lacking dates, milestones, or explicit deliverables.
-2. **Zero Constraint Verification:** They fail to verify whether financial budgets or timeframes realistically support the activities.
-3. **No Dependency Awareness:** They schedule downstream activities before prerequisites are met (e.g., attempting site tours before airport transfer or lodging check-in).
-4. **Rigid Static Templates:** Hardcoded bots break when the user enters an unexpected or non-standard goal.
+### The Challenge
+Most conventional LLM chatbots operate as **one-shot prompt-response engines**: when a user asks to plan a complex objective (e.g., *"Plan a 5-day cultural trip to Tokyo with ¥250,000 JPY"* or *"Build and launch an AI SaaS MVP with $3,500 USD"*), traditional models generate superficial bullet points without verified financial allocations, dependency tracking, currency exchange calculations, or constraint optimization.
 
-### The Universal Agentic Solution
-This system is completely domain-agnostic and handles **ANY task**:
-- **Goal Intent & Constraint Extraction:** Autonomously infers action verbs, domain category, timeline constraints (days/weeks/months), budget ceilings, and complexity.
-- **Feasibility & Workload Auditing:** Evaluates effort hours, workload intensity, and provides scoping recommendations.
-- **Dynamic Phased Decomposition:** Partitions ANY goal into 4 chronological stages:
-  1. *Phase 1: Inception, Scoping & Prerequisites*
-  2. *Phase 2: Core Execution & Implementation*
-  3. *Phase 3: Validation, Quality Review & Testing*
-  4. *Phase 4: Launch, Delivery & Handover*
-- **Critical Path & Milestones:** Identifies the bottleneck dependency chain and establishes milestone progress gates.
-- **Failure Mode Safeguards:** Pairs each identified operational risk with an automated contingency protocol.
-- **Plan Persistence:** Archives the structured plan into persistent memory (`data/plans.json`).
+### Our Solution: General Task Planner Agent
+We built a general-purpose, autonomous **Task Planner Agent** that can deconstruct **ANY arbitrary goal** (travel, software engineering, conference organizing, digital marketing, home renovation, study/prep roadmaps, business launches, etc.).
+
+Crucially, our system solves two core challenges:
+1. **Domain Generalization**: The agent is not hardcoded to a single task; it dynamically classifies domains, retrieves contextual execution blueprints, and constructs granular, milestone-driven phases.
+2. **Arbitrary Currency & Financial Feasibility**: Users specify a budget in **any world currency** (e.g., `USD $`, `EUR €`, `INR ₹`, `GBP £`, `JPY ¥`, `CAD C$`, `AUD A$`, `AED`, `CHF`, `SGD`, etc.). The agent autonomously normalizes currencies, calculates phased budget allocations, locks in an emergency contingency reserve (10–15%), evaluates feasibility, and ensures every subtask has an assigned price tag in the user's chosen currency with zero debt risk.
 
 ---
 
-## 🏗️ System Architecture & Workflow Diagram
+## 2. Agentic Workflow Behaviour
 
-The agent adheres strictly to the **Plan → Act → Observe → Respond** agentic cycle:
+The system strictly follows the **ReAct (Reasoning + Acting)** and **Plan-and-Execute** paradigms rather than a single prompt-response:
+
+$$\text{User Goal} \longrightarrow [\textbf{PLAN}] \longrightarrow [\textbf{ACT: Tools}] \longrightarrow [\textbf{OBSERVE}] \longrightarrow [\textbf{ADJUST}] \longrightarrow [\textbf{RESPOND}]$$
 
 ```mermaid
 flowchart TD
-    A[User Goal: ANY Task or Goal Input] --> B[Phase 1: Task Intent & Constraint Parsing]
+    A([User Prompt + Target Budget in Any Currency]) --> B[1. PLAN: Goal Decomposition & Scope Analysis]
+    B --> C{2. ACT: Tool Invocations}
     
-    subgraph Parsing [1. Goal Decomposition]
-        B --> B1[Extract Goal Verb & Topic]
-        B1 --> B2[Extract Timeline & Budget Limits]
-        B2 --> B3[Determine Complexity Tier]
-    end
+    C -->|Tool 1| D[CurrencyConverter: 35+ Currencies & Rates]
+    C -->|Tool 2| E[KnowledgeRetriever: Domain Execution Blueprints]
+    C -->|Tool 3| F[BudgetCalculator: Phase Weights & 12% Contingency]
+    C -->|Tool 4| G[ScheduleEstimator: Critical Path & Effort Hours]
+    C -->|Tool 5| H[RiskEvaluator & ResourceFinder: Mitigations & Tooling]
     
-    B3 --> C[Phase 2: ReAct Autonomous Execution Loop]
+    D --> I[3. OBSERVE: Constraint Satisfaction & Feasibility Check]
+    E --> I
+    F --> I
+    G --> I
+    H --> I
     
-    subgraph ReActLoop [2. ReAct Execution Loop]
-        C --> D1{Thought 1}
-        D1 --> T1[analyze_task_intent]
-        T1 --> O1[Observe Domain Category & Constraints]
-        
-        O1 --> D2{Thought 2}
-        D2 --> T2[audit_feasibility_and_effort]
-        T2 --> O2[Observe Feasibility Score & Workload Hours]
-        
-        O2 --> D3{Thought 3}
-        D3 --> T3[decompose_any_task]
-        T3 --> O3[Observe 4-Phase Subtasks & Deliverables]
-        
-        O3 --> D4{Thought 4}
-        D4 --> T4[derive_critical_path_and_milestones]
-        T4 --> O4[Observe Critical Path & 3 Progress Gates]
-        
-        O4 --> D5{Thought 5}
-        D5 --> T5[audit_failure_modes_and_safeguards]
-        T5 --> O5[Observe Risk Matrix & Mitigations]
-        
-        O5 --> D6{Thought 6}
-        D6 --> T6[persist_master_plan]
-        T6 --> O6[Observe Plan ID: PLAN-2026-...]
-    end
+    I --> J{Within Budget & Feasible?}
+    J -->|Yes| K[4. ADJUST: Sequence Subtasks, Durations & Dependencies]
+    J -->|Adjust Needed| L[Rebalance Allocation & Trim Optional Items]
+    L --> K
     
-    O6 --> F[Phase 3: Synthesize Final Master Execution Plan]
-    F --> G[Deliver Master Plan: Tasks, Milestones, Risks, Effort]
+    K --> M[5. RESPOND: Synthesize Final Plan + Live SSE Stream to UI]
+    M --> N([Interactive Gemini-Themed Workspace & Checklist])
 ```
 
-### State Management (`AgentState`)
-Every interaction is backed by a typed Pydantic state model (`AgentState`):
-- `session_id`: Unique identifier for the conversation session.
-- `user_goal`: Raw goal prompt provided by the user.
-- `parsed_constraints`: Dictionary holding duration (days), budget ceiling, domain category, and complexity tier.
-- `scratchpad`: Sequential list of `AgentAction` objects recording `Thought`, `Action Name`, `Action Input`, and `Observation`.
-- `structured_plan`: Complete `StructuredPlan` object containing subtasks, critical path, milestones, and risks.
-- `final_response`: Executive Markdown presentation roadmap.
+### The 5 Agentic Stages
+1. **PLAN**: Deconstructs high-level intent, detects domain patterns, and extracts budget/currency parameters.
+2. **ACT (Tools Execution)**:
+   - `currency_converter`: Validates rates and purchasing power across 35+ global currencies.
+   - `knowledge_retriever`: Fetches domain best practices, milestone sequences, and risk vectors.
+   - `budget_calculator`: Mathematically allocates funds, sets a mandatory 12% contingency reserve, and checks feasibility.
+   - `schedule_estimator`: Computes active working days, total effort hours, and critical paths.
+   - `risk_evaluator` & `resource_finder`: Maps dependencies, software licenses, equipment, and mitigations.
+3. **OBSERVE**: Analyzes tool outputs, validates constraints against user caps, and calculates the Feasibility Score (0–100).
+4. **ADJUST**: Sequences dependencies (`T01 -> T02 -> T03`), tags priorities, and adjusts line items to prevent budget overruns.
+5. **RESPOND**: Delivers a structured plan with interactive checklists, financial bars, and export options.
 
 ---
 
-## 🛠️ Autonomous Tool Registry
+## 3. System Architecture
 
-| Tool Name | Input Parameters | Output / Action |
-|:---|:---|:---|
-| `analyze_task_intent` | `goal: str` | Extracts goal intent, domain category, duration constraints, budget, and complexity. |
-| `audit_feasibility_and_effort` | `goal: str`, `timeline_days: int`, `complexity: str`, `budget: float` | Computes workload hours, feasibility score (0–100), warnings, and scope advice. |
-| `decompose_any_task` | `goal: str`, `category: str`, `complexity: str`, `timeline_days: int` | Universally breaks down ANY task into 4 phased, chronological deliverables. |
-| `derive_critical_path_and_milestones` | `subtasks: list`, `timeline_days: int` | Maps dependency chains, derives the sequential critical path, and establishes 3 milestone checkpoints. |
-| `audit_failure_modes_and_safeguards` | `goal: str`, `category: str` | Audits operational failure points and injects concrete contingency protocols. |
-| `persist_master_plan` | `plan_data: dict` | Persists the final structured plan into `data/plans.json` with a unique Plan ID. |
-
----
-
-## 💻 Setup & Run Instructions
-
-### 1. Prerequisites
-- Python 3.10, 3.11, 3.12, 3.13, or 3.14
-- Git
-
-### 2. Installation
-Clone the repository:
-```bash
-git clone https://github.com/Anandha-raaman/Chatbot-Techvruk.git
-cd Chatbot-Techvruk
-
-# Install dependencies
-pip install -r requirements.txt
 ```
-
-### 3. API Key Configuration (Optional — Zero-Key Offline Ready!)
-In accordance with contest fairness rules, **this agent runs out-of-the-box in offline mode with zero API keys required**. 
-
-If you wish to test with Google Gemini's live API:
-```bash
-# Create .env file
-echo GEMINI_API_KEY=your_gemini_api_key_here > .env
-```
-
-### 4. Running the Project
-
-#### Option A: Interactive Streamlit Web UI (Gemini Red & White Theme)
-Launch the web dashboard featuring prompt chips, live reasoning tree, and real-time ReAct telemetry:
-```bash
-python main.py --web
-```
-*Open your browser to `http://localhost:8501`.*
-
-#### Option B: Interactive CLI Mode
-Run in your terminal with colored telemetry:
-```bash
-python main.py --cli
-```
-
-#### Option C: Automated Benchmark Demo
-Run 4 automated multi-domain planning scenarios sequentially:
-```bash
-python main.py
-```
-
-#### Option D: Execute Test Suite
-Verify all unit and integration test assertions:
-```bash
-python -m unittest test_agent.py
+Chatbot-Techvruk/
+├── app.py                      # Flask Server, Server-Sent Events (SSE) Stream, REST APIs
+├── agent/
+│   ├── planner_agent.py        # Autonomous ReAct Orchestrator & State Management
+│   ├── tools.py                # 6 Agentic Tools (Currency, Budget, Schedule, Risk, Resources, Blueprint)
+│   └── schemas.py              # Pydantic v2 Type-Safe Data Models
+├── static/
+│   ├── index.html              # Sleek Gemini UI (Hero, Pill Composer, Trace Drawer, Plan View)
+│   ├── css/
+│   │   └── style.css           # Premium Gemini Dark/Light Theme with Iridescent Accents
+│   └── js/
+│       └── app.js              # Reactive Client, SSE Stream Consumer, Task Checklist & Exports
+├── test_agent.py               # Standalone Command-Line Automated Test Suite
+├── requirements.txt            # Python Dependencies
+├── PRESENTATION.md             # 5-Slide Presentation Summary
+└── README.md                   # Complete Documentation & Benchmarks
 ```
 
 ---
 
-## 📋 Multi-Domain Benchmark Scenarios
+## 4. Setup & Run Instructions
 
-### Benchmark 1: 3-Day Trip to Tokyo (Contest Prompt Example)
-- **Goal:** `"Plan a 3-day cultural and culinary trip to Tokyo for 2 people with historic landmarks and food markets on a $1,200 budget"`
-- **Decomposed Phases:**
-  - *Phase 1 (Logistics):* Flight confirmation, central hotel booking, local eSIM data, and IC transit card pre-orders.
-  - *Phase 2 (Itinerary):* Day 1 arrival & neighborhood walk; Day 2 Asakusa & culinary food tour; Day 3 Meiji Shrine & market shopping.
-  - *Phase 3 (Departure):* Souvenir packing, hotel checkout, and return transit transfer.
-- **Critical Path:** `TASK-01 ➔ TASK-03 ➔ TASK-04 ➔ TASK-05`
-- **Risks & Safeguards:** Advance reservation of landmark passes + open-date museum backup vouchers for rain.
+### Prerequisites
+- Python 3.10 or higher
+- Modern web browser (Chrome, Edge, Firefox, Safari)
 
-### Benchmark 2: SaaS AI MVP Launch in 4 Weeks
-- **Goal:** `"Build and launch a SaaS AI MVP in 4 weeks with user authentication and payment billing on a $2,000 budget"`
-- **Decomposed Phases:**
-  - *Phase 1:* PRD specification, database schema design, and CI/CD repository setup.
-  - *Phase 2:* Backend service endpoints, Stripe payment webhooks, and responsive frontend UI.
-  - *Phase 3:* End-to-end integration testing, input guardrails, and telemetry logging.
-  - *Phase 4:* Cloud deployment with custom SSL domain, beta onboarding, and feedback triage.
+### Quick Start (One Command)
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Anandha-raaman/Chatbot-Techvruk.git
+   cd Chatbot-Techvruk
+   ```
 
-### Benchmark 3: Exam Preparation Sprint
-- **Goal:** `"Prepare for the AWS Solutions Architect exam in 30 days studying 2 hours daily with hands-on practice labs"`
-- **Decomposed Phases:**
-  - *Phase 1:* Syllabus scoping, official documentation curation, and benchmark diagnostic test.
-  - *Phase 2:* High-priority service deep-dives (Compute, Storage, Networking, IAM).
-  - *Phase 3:* Hands-on architecture labs and timed mock exams.
-  - *Phase 4:* Final weak-area revision, formula cheatsheets, and exam day logistics.
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the application:**
+   ```bash
+   python app.py
+   ```
+
+4. **Open in browser:**
+   Navigate to [http://localhost:5000](http://localhost:5000).
+
+> [!NOTE]
+> The agent works **100% autonomously out of the box** using its built-in ReAct reasoning engine—no paid API keys required!
+> If you have a Google Gemini API key, you can optionally paste it in the **Settings (⚙️)** modal to activate live Gemini Flash reasoning.
 
 ---
 
-## 🧪 Testing & Verification
+## 5. Sample Inputs & Outputs
 
-The project includes an automated test suite verifying all core functionalities:
-```bash
-python -m unittest test_agent.py -v
-```
+### Example 1: Travel & Cultural Trip (Japanese Yen - JPY)
+* **Goal Input:** `"Plan a 5-day cultural and culinary trip to Tokyo and Kyoto"`
+* **Budget:** `¥250,000 JPY`
+* **Currency:** `JPY (¥)`
 
-### Test Output:
+#### Agentic Execution Trace:
 ```text
-test_01_analyze_task_intent (__main__.TestUniversalTaskPlanner) ... ok
-test_02_audit_feasibility (__main__.TestUniversalTaskPlanner) ... ok
-test_03_decompose_arbitrary_task (__main__.TestUniversalTaskPlanner) ... ok
-test_04_critical_path_and_milestones (__main__.TestUniversalTaskPlanner) ... ok
-test_05_risk_safeguards (__main__.TestUniversalTaskPlanner) ... ok
-test_06_end_to_end_universal_planning (__main__.TestUniversalTaskPlanner) ... ok
-
-----------------------------------------------------------------------
-Ran 6 tests in 0.025s
-
-OK
+[PLAN]    Step 1: Goal Decomposition & Scope Analysis
+          -> Domain classified as 'TRAVEL'. Target constraint: ¥250,000 JPY.
+[ACT]     Step 2: Currency Normalization & Exchange Rate Audit
+          -> Tool 'currency_converter': ¥250,000 JPY (~$1,621.27 USD).
+[ACT]     Step 3: Domain Blueprint & Workflow Retrieval
+          -> Tool 'knowledge_retriever': Loaded 3-phase travel blueprint.
+[ACT]     Step 4: Multi-Currency Budget & Contingency Allocation
+          -> Tool 'budget_calculator': Operational fund: ¥220,000 | 12% Contingency: ¥30,000.
+[ACT]     Step 5: Resource Mapping & Risk Assessment
+          -> Tool 'risk_evaluator_and_resource_finder': Identified transit delays, forex surcharges.
+[OBSERVE] Step 6: Constraint Satisfaction & Feasibility Audit
+          -> Within budget: TRUE | Feasibility Score: 95/100.
+[ADJUST]  Step 7: Plan Optimization & Dependency Sequencing
+          -> Formatted 9 subtasks with localized costs and tool chips.
+[RESPOND] Step 8: Final Agent Response & Plan Delivery
 ```
 
+#### Final Structured Output:
+- **Phases:**
+  1. *Phase 1: Pre-Departure Logistics & Bookings* (¥99,000 JPY)
+     - `[T01]` Reserve Round-Trip Flight & City Center Lodging — `¥39,600 JPY` (Tools: Google Flights, Booking API)
+     - `[T02]` Acquire Travel Insurance & International eSIM — `¥3,960 JPY` (Tools: Airalo eSIM, WorldNomads)
+     - `[T03]` Compile Digital Documents & Visa Authorizations — `¥990 JPY`
+  2. *Phase 2: Itinerary & Experience Orchestration* (¥88,000 JPY)
+     - `[T04]` Map Key Neighborhoods & Cultural Sites — `¥13,200 JPY`
+     - `[T05]` Book High-Demand Attractions & Museum Tickets — `¥10,560 JPY`
+     - `[T06]` Curate Authentic Culinary & Hidden Gem Checklist — `¥13,200 JPY`
+  3. *Phase 3: Departure Readiness & Contingency Protocol* (¥33,000 JPY)
+     - `[T07]` Pack Climate-Appropriate Wardrobe & Power Adapters — `¥2,640 JPY`
+     - `[T08]` Setup Zero-Forex Cards & Cash Buffer — `¥4,400 JPY`
+     - `[T09]` Download Offline Maps & Language Packs — `¥0 JPY`
+- **Contingency Reserve:** `¥30,000 JPY`
+- **Total Feasible Cost:** `¥250,000 JPY`
+
 ---
 
-## 📊 Presentation Deliverable
-
-As required by the contest rules (*Short presentation — max 5 slides*), the slide deck is provided in two formats:
-1. **PowerPoint Presentation:** `Techvruk_Agentic_System_Presentation.pptx` (Generated automatically with executive Red & White aesthetic).
-2. **Speaker Notes & Markdown Deck:** [`presentation.md`](presentation.md) (Slide-by-slide script, timing, and talking points).
+### Example 2: Tech Event Organizing (Indian Rupee - INR)
+* **Goal Input:** `"Organize a 200-person Regional Tech Conference with keynotes and sponsor booths"`
+* **Budget:** `₹4,50,000 INR`
+* **Currency:** `INR (₹)`
+* **Output:**
+  - *Phase 1 (Venue & Financial Lock):* ₹1,98,000 INR (Auditorium, AV systems, registration portal)
+  - *Phase 2 (Speaker & Vendor Management):* ₹1,38,600 INR (Catering, badges, speaker kit)
+  - *Phase 3 (Rehearsal & Live Run):* ₹59,400 INR (Stage crew, dry runs, session recording)
+  - *Contingency Buffer:* ₹54,000 INR
+  - *Feasibility Index:* 95/100
 
 ---
 
-## ⚖️ Contest Guidelines & Free-Tier Compliance
+## 6. Key Features & Contest Rubric Alignment
 
-- **No Paid APIs Required:** Built-in offline simulator engine ensures zero dependencies on paid tokens.
-- **Original Architecture:** Custom Pydantic state machine with explicit ReAct tool loop developed specifically for this contest.
-- **Deterministic Action Logs:** Complete audit trail in `data/plans.json`.
+| Rubric Criteria | Implementation in Project |
+| :--- | :--- |
+| **Agentic Workflow** | Transparent ReAct sequence (`Plan -> Act -> Observe -> Adjust -> Respond`) streamed live to UI via SSE. |
+| **Multi-Step Tool Use** | 6 specialized tools: `CurrencyConverter`, `BudgetCalculator`, `ScheduleEstimator`, `RiskEvaluator`, `ResourceFinder`, `KnowledgeRetriever`. |
+| **Multi-Currency Support** | Users can supply budgets in 35+ currencies (USD, EUR, INR, GBP, JPY, CAD, AUD, etc.); the agent formats and verifies costs in the user's currency. |
+| **User Interface** | Google Gemini aesthetic with floating pill composer, real-time agent trace accordion, interactive subtask checkboxes, dark/light theme, and export options. |
+| **Export Formats** | One-click copy/download as Markdown (`.md`), structured JSON (`.json`), or printer-friendly document. |
+| **Follow-up Interaction** | Interactive chat allowing users to request budget reductions, timeline accelerations, or risk mitigations dynamically. |
+
+---
+
+## 7. License
+Distributed under the MIT License. See `LICENSE` for details.

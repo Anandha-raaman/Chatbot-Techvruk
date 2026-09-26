@@ -1,421 +1,339 @@
 """
-Streamlit Web Dashboard for Techvruk Universal Task Planner Agent.
-Features an ultra-smooth Red & White Gemini-inspired user interface.
-Handles ANY arbitrary task, breaking it down autonomously using ReAct workflow.
+Chatbot Techvruk - Autonomous AI Task Planner Web Application
+Clean, private, conversational system matching modern aesthetics.
+Handles natural language planning, background multi-currency parsing, and follow-up refinements.
 """
 
-import streamlit as st
-import json
 import os
-import sys
+import re
+import json
+import time
+import uuid
+import queue
+import threading
+from dotenv import load_dotenv
+load_dotenv()
 
-# Ensure local imports work
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from flask import Flask, request, jsonify, Response, send_from_directory
+from agent.dynamic_planner import DynamicTaskPlanner
+from agent.tools import CurrencyConverter
 
-from agent.core import TaskPlannerAgent
-from agent.tools import _load_json, PLANS_FILE
+app = Flask(__name__, static_folder="static")
 
-st.set_page_config(
-    page_title="Task Planner Agent",
-    page_icon="✨",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+# In-memory storage for active sessions & plans
+active_sessions = {}
 
-# Ultra-Smooth Red & White Gemini-Style Custom CSS
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@app.route("/")
+def index():
+    return send_from_directory("static", "index.html")
 
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
+@app.route("/<path:path>")
+def static_proxy(path):
+    return send_from_directory("static", path)
 
-    /* Main Background */
-    .stApp {
-        background-color: #FAFAFC;
-    }
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    """
+    Main conversational endpoint.
+    Accepts natural language user input, automatically detects any task, budget,
+    and currency in the background, and streams clean thinking and plan delivery.
+    """
+    data = request.get_json() or {}
+    message = data.get("message", "").strip()
+    session_id = data.get("session_id") or str(uuid.uuid4())[:8]
+    api_key = data.get("api_key") or os.environ.get("GEMINI_API_KEY")
 
-    /* Gemini-Style Centered Greeting */
-    .gemini-hero {
-        text-align: center;
-        padding: 40px 20px 25px 20px;
-        max-width: 850px;
-        margin: 0 auto;
-    }
+    if not message:
+        return jsonify({"error": "Message cannot be empty"}), 400
 
-    .gemini-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #DC2626 0%, #E11D48 50%, #991B1B 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -0.03em;
-        margin-bottom: 10px;
-        line-height: 1.15;
-    }
+    q = queue.Queue()
 
-    .gemini-subtitle {
-        font-size: 1.15rem;
-        color: #64748B;
-        font-weight: 400;
-        line-height: 1.6;
-        margin-bottom: 25px;
-    }
+    def worker():
+        nonlocal api_key
+        try:
+            # Check if user passed/pasted a Gemini API Key in the prompt
+            key_match = re.search(r"AIzaSy[A-Za-z0-9_-]{33}", message)
+            if key_match:
+                extracted_key = key_match.group(0)
+                os.environ["GEMINI_API_KEY"] = extracted_key
+                api_key = extracted_key
+                try:
+                    with open(".env", "w", encoding="utf-8") as f:
+                        f.write(f"GEMINI_API_KEY={extracted_key}\n")
+                except Exception:
+                    pass
+                q.put({
+                    "type": "thought",
+                    "content": "✦ Google Gemini API Key recognized and saved! Switching directly to gemini-2.5-flash..."
+                })
 
-    /* Feature Badge Row */
-    .badge-container {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 30px;
-    }
+            session = active_sessions.get(session_id)
+            if session and session.get("current_plan") and not _is_new_plan_request(message):
+                # Conversational follow-up
+                plan = session["current_plan"]
+                all_plans = session.get("plans", [plan])
+                q.put({
+                    "type": "thought",
+                    "content": f"Reviewing active plan '{plan['title']}' to answer your question..."
+                })
+                time.sleep(0.3)
+                reply = _generate_followup_reply(message, plan, all_plans, api_key)
+                q.put({
+                    "type": "followup",
+                    "reply": reply,
+                    "session_id": session_id
+                })
+            else:
+                # New plan generation (supports multiple plans in the same chat)
+                extracted_budget, detected_curr = DynamicTaskPlanner.extract_budget_and_currency(message)
+                
+                # Stream human-friendly, clean thinking steps (NO code, NO technical tool schemas)
+                q.put({
+                    "type": "thought",
+                    "content": f"Deconstructing goal and identifying key objectives..."
+                })
+                time.sleep(0.3)
 
-    .gemini-badge {
-        background: #FFFFFF;
-        color: #DC2626;
-        border: 1px solid #FECACA;
-        padding: 6px 16px;
-        border-radius: 9999px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
-        transition: all 0.2s ease;
-    }
+                q.put({
+                    "type": "thought",
+                    "content": f"Auditing financial allocation in {detected_curr} with a 12% contingency buffer..."
+                })
+                time.sleep(0.3)
 
-    .gemini-badge:hover {
-        background: #FEF2F2;
-        transform: translateY(-1px);
-    }
+                q.put({
+                    "type": "thought",
+                    "content": f"Structuring chronological phases, time horizons, and actionable subtasks..."
+                })
+                time.sleep(0.3)
 
-    /* Card Containers */
-    .plan-card {
-        background: #FFFFFF;
-        border: 1px solid #F1F5F9;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-        margin-bottom: 20px;
-    }
+                # Generate the rich contextual plan using real-world LLM
+                plan = DynamicTaskPlanner.generate_plan(message, api_key=api_key)
+                plan["session_id"] = session_id
+                plan["original_query"] = message
 
-    .plan-header {
-        border-bottom: 1px solid #F1F5F9;
-        padding-bottom: 16px;
-        margin-bottom: 20px;
-    }
+                # Save session - keep all plans so user can create multiple plans in one chat
+                if session_id not in active_sessions:
+                    active_sessions[session_id] = {"history": [], "current_plan": None, "plans": []}
+                active_sessions[session_id]["current_plan"] = plan
+                if "plans" not in active_sessions[session_id]:
+                    active_sessions[session_id]["plans"] = []
+                active_sessions[session_id]["plans"].append(plan)
+                active_sessions[session_id]["history"].append({"user": message, "plan": plan})
 
-    /* Metrics Bar */
-    .metric-row {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
+                q.put({
+                    "type": "plan",
+                    "data": plan,
+                    "session_id": session_id
+                })
 
-    .metric-box {
-        flex: 1;
-        min-width: 140px;
-        background: #FFFFFF;
-        border: 1px solid #FEE2E2;
-        border-radius: 12px;
-        padding: 14px 18px;
-        box-shadow: 0 2px 6px rgba(220, 38, 38, 0.04);
-    }
+        except Exception as e:
+            q.put({"type": "error", "message": f"An error occurred: {str(e)}"})
+        finally:
+            q.put(None)
 
-    .metric-box-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #94A3B8;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
+    threading.Thread(target=worker, daemon=True).start()
 
-    .metric-box-val {
-        font-size: 1.35rem;
-        font-weight: 800;
-        color: #1E293B;
-    }
+    def event_stream():
+        while True:
+            item = q.get()
+            if item is None:
+                break
+            yield f"data: {json.dumps(item)}\n\n"
 
-    /* Subtask Item Card */
-    .subtask-item {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-left: 4px solid #DC2626;
-        border-radius: 10px;
-        padding: 14px 18px;
-        margin-bottom: 10px;
-        transition: all 0.2s ease;
-    }
+    return Response(event_stream(), mimetype="text/event-stream")
 
-    .subtask-item:hover {
-        border-color: #DC2626;
-        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);
-    }
+def _is_new_plan_request(msg: str) -> bool:
+    """Determines whether a message is requesting a new plan vs asking a conversational question."""
+    m = msg.lower().strip()
+    
+    # Explicit indicators of a new plan
+    plan_override = any(w in m for w in [
+        "another plan", "new plan", "also plan", "second plan", "next plan", 
+        "different plan", "plan a", "plan my", "plan for", "plan to", "give me a plan",
+        "plan another", "one more plan", "make a plan"
+    ])
+    if plan_override:
+        return True
 
-    .subtask-title {
-        font-weight: 700;
-        color: #0F172A;
-        font-size: 0.98rem;
-        margin-bottom: 4px;
-    }
+    # Pure conversational follow-up questions
+    question_starters = (
+        "why ", "why?", "how come", "what does", "who will", "which ",
+        "can you reduce", "can we cut", "can i reduce", "is it possible to save",
+        "explain", "tell me more about", "what do you mean", "details of"
+    )
+    if m.startswith(question_starters):
+        return False
 
-    .subtask-meta {
-        font-size: 0.82rem;
-        color: #64748B;
-    }
+    # Check for general planning or task keywords
+    plan_words = [
+        "plan", "trip", "tour", "travel", "vacation", "itinerary", "visit",
+        "launch", "build", "create", "organize", "schedule", "roadmap", "routine",
+        "business", "bakery", "cafe", "app", "software", "saas", "mvp",
+        "event", "wedding", "conference", "party", "renovate", "prepare", "exam",
+        "workout", "fitness", "diet", "study", "trek"
+    ]
+    currency_words = [
+        "inr", "usd", "eur", "jpy", "gbp", "cad", "aud", "rupees", "dollars",
+        "₹", "$", "€", "¥", "£", "budget", "price", "cost"
+    ]
 
-    .priority-pill {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        margin-right: 6px;
-    }
+    has_plan = any(w in m for w in plan_words)
+    has_curr = any(w in m for w in currency_words)
 
-    .priority-high {
-        background: #FEE2E2;
-        color: #B91C1C;
-    }
+    return has_plan or has_curr or len(m.split()) >= 3
 
-    .priority-medium {
-        background: #FEF3C7;
-        color: #B45309;
-    }
+def _generate_followup_reply(query: str, plan: Dict[str, Any], all_plans: List[Dict[str, Any]], api_key: Optional[str]) -> str:
+    """Generates intelligent conversational follow-ups using real-world LLM (Gemini or local models)."""
+    curr = plan.get("currency", "USD")
 
-    /* Telemetry Bubble */
-    .telemetry-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 14px;
-        margin-bottom: 10px;
-        font-size: 0.88rem;
-    }
+    # Multi-plan context overview
+    plans_context = "\n".join([f"- Plan {i+1}: {p.get('title')} (Budget: {p.get('target_budget')} {p.get('currency')})" for i, p in enumerate(all_plans)])
 
-    .thought-text {
-        color: #0F172A;
-        font-weight: 500;
-        margin-bottom: 6px;
-    }
+    # 1. If Gemini API key is configured, use live LLM
+    effective_key = api_key or os.environ.get("GEMINI_API_KEY")
+    if effective_key:
+        try:
+            import google.genai as genai
+            client = genai.Client(api_key=effective_key)
+            prompt = f"""You are Chatbot Techvruk, an elite autonomous task planner assistant.
+Plans in this chat:
+{plans_context}
 
-    .action-badge {
-        background: #FEF2F2;
-        color: #DC2626;
-        font-family: monospace;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
+Active Plan Details:
+Title: {plan.get('title')}
+Summary: {plan.get('summary')}
+Budget: {plan.get('target_budget')} {curr}
+Phases: {[p.get('phase_name') for p in plan.get('phases', [])]}
 
-    /* Red Primary Buttons */
-    .stButton>button {
-        background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%) !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        border-radius: 9999px !important;
-        font-weight: 600 !important;
-        padding: 10px 24px !important;
-        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3) !important;
-        transition: all 0.2s ease !important;
-    }
+User Question: "{query}"
 
-    .stButton>button:hover {
-        background: linear-gradient(135deg, #B91C1C 0%, #991B1B 100%) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4) !important;
-    }
+Answer concisely, helpfully, and practically. Do not reveal code, schemas, or technical implementation details. Keep the tone warm, clear, and professional."""
+            for g_model in ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash']:
+                try:
+                    resp = client.models.generate_content(
+                        model=g_model,
+                        contents=prompt
+                    )
+                    if resp and resp.text:
+                        return resp.text.strip()
+                except Exception:
+                    continue
+        except Exception as e:
+            print(f"[Gemini Followup Notice] {e}")
 
-    /* Input text area styling */
-    .stTextArea textarea {
-        border-radius: 16px !important;
-        border: 1.5px solid #E2E8F0 !important;
-        padding: 16px !important;
-        font-size: 1rem !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
-        transition: all 0.2s ease !important;
-    }
+    # 2. Use real-world local LLM (Qwen 2.5 7B or Gemma 3) via Ollama
+    for model_name in ['qwen2.5:7b', 'gemma3:270m']:
+        try:
+            import ollama
+            prompt = f"""You are Gemini Task Planner assistant powered by a real-world LLM.
+Active Plan Context:
+Title: {plan.get('title')}
+Summary: {plan.get('summary')}
+Budget: {plan.get('target_budget')} {curr}
+Phases: {[p.get('phase_name') for p in plan.get('phases', [])]}
 
-    .stTextArea textarea:focus {
-        border-color: #DC2626 !important;
-        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+User Question: "{query}"
 
+Answer helpfully, practically, and specifically in 2-3 concise paragraphs. Do not mention code or technical schemas."""
+            resp = ollama.chat(model=model_name, messages=[{'role': 'user', 'content': prompt}], options={'temperature': 0.4})
+            reply_text = resp['message']['content'].strip()
+            if reply_text:
+                return reply_text
+        except Exception:
+            continue
 
-# Initialize Session State
-if "agent" not in st.session_state:
-    st.session_state.agent = TaskPlannerAgent()
-
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-
-# Sidebar for Settings & Blueprints
-with st.sidebar:
-    st.markdown("<h3 style='color: #DC2626; margin-bottom: 4px;'>⚙️ Planner Settings</h3>", unsafe_allow_html=True)
-    st.caption("Universal Agentic Execution Engine")
-
-    # API Key Config
-    api_key_input = st.text_input("Gemini API Key (Optional)", type="password", placeholder="Paste AI Studio Key here")
-    if api_key_input:
-        st.session_state.agent = TaskPlannerAgent(api_key=api_key_input.strip())
-        st.success("Connected to live Gemini API!")
+    # Fallback contextual reply
+    q_lower = query.lower()
+    if any(w in q_lower for w in ["reduce", "cut", "save", "lower", "cheap"]):
+        reserve_str = CurrencyConverter.format(plan.get('contingency_reserve', 0), curr)
+        return (
+            f"Here is how you can optimize and reduce costs for your {plan.get('title')}:\n\n"
+            f"1. **Leverage the Contingency Reserve:** You currently have {reserve_str} set aside as a buffer, which provides room for unexpected costs.\n"
+            f"2. **Trim Optional Phase Items:** Shift non-essential activities in Phase 2/3 to self-guided or budget-friendly alternatives.\n"
+            f"3. **Book in Advance:** Early booking typically yields 15-25% savings across transit, venue, or tool subscriptions."
+        )
+    elif any(w in q_lower for w in ["detail", "more", "explain", "how to"]):
+        return (
+            f"For your plan **{plan.get('title')}**, each task is organized in chronological order. "
+            f"Start with **Phase 1: {plan.get('phases', [{}])[0].get('phase_name', '')}**. "
+            f"Focus on completing the first subtask first, and use the interactive checkboxes in the plan to track your live progress."
+        )
+    elif any(w in q_lower for w in ["budget", "price", "cost", "money"]):
+        total = CurrencyConverter.format(plan.get('target_budget', 0), curr)
+        alloc = CurrencyConverter.format(plan.get('allocated_cost', 0), curr)
+        res = CurrencyConverter.format(plan.get('contingency_reserve', 0), curr)
+        return (
+            f"**Budget Breakdown for {plan.get('title')}:**\n"
+            f"• **Target Total:** {total} {curr}\n"
+            f"• **Allocated Expenses:** {alloc} {curr}\n"
+            f"• **Emergency Buffer (12%):** {res} {curr}\n\n"
+            f"Every task has an individual cost attribution so you never exceed your ceiling."
+        )
     else:
-        st.info("Operating in Zero-Key Offline Mode (100% Free-Tier compliant).")
+        return (
+            f"Regarding your question about **{plan.get('title')}**: "
+            f"The current roadmap spans {plan.get('duration_summary', 'the planned duration')} across {len(plan.get('phases', []))} structured phases. "
+            f"Would you like me to adjust any specific phase, or would you like recommendations for specific resources?"
+        )
 
-    st.divider()
+@app.route("/api/export/<format_type>", methods=["POST"])
+def export_plan(format_type: str):
+    """Exports plan as Markdown or structured JSON."""
+    data = request.get_json() or {}
+    session_id = data.get("session_id")
+    session = active_sessions.get(session_id)
+    if not session or not session.get("current_plan"):
+        return jsonify({"error": "Plan not found"}), 404
 
-    st.markdown("<h4 style='color: #1E293B;'>💾 Plan Archives</h4>", unsafe_allow_html=True)
-    saved_plans = _load_json(PLANS_FILE)
-    st.caption(f"{len(saved_plans)} Master Plans Compiled")
-    if saved_plans:
-        with st.expander("View Saved Plans JSON"):
-            st.json(saved_plans[-3:] if len(saved_plans) > 3 else saved_plans)
+    plan = session["current_plan"]
+    curr = plan.get("currency", "USD")
 
-    st.divider()
-    if st.button("Clear Conversation History", use_container_width=True):
-        st.session_state.history = []
-        st.rerun()
+    if format_type.lower() == "json":
+        return Response(
+            json.dumps(plan, indent=2),
+            mimetype="application/json",
+            headers={"Content-Disposition": f"attachment;filename=plan_{session_id}.json"}
+        )
 
+    # Markdown export
+    lines = [
+        f"# ✦ {plan.get('title', 'Task Plan')}",
+        f"**Target Budget:** {CurrencyConverter.format(plan.get('target_budget', 0), curr)} | **Duration:** {plan.get('duration_summary', 'N/A')}",
+        "",
+        "## Overview",
+        plan.get("summary", ""),
+        "",
+        "## Budget Breakdown",
+        f"- **Total Budget:** {CurrencyConverter.format(plan.get('target_budget', 0), curr)}",
+        f"- **Allocated Expenses:** {CurrencyConverter.format(plan.get('allocated_cost', 0), curr)}",
+        f"- **Contingency Reserve (12%):** {CurrencyConverter.format(plan.get('contingency_reserve', 0), curr)}",
+        "",
+        "## Actionable Phases & Checklist",
+        ""
+    ]
 
-# Gemini Hero Header
-st.markdown("""
-<div class="gemini-hero">
-    <div class="gemini-title">What task would you like to plan?</div>
-    <div class="gemini-subtitle">
-        Enter any arbitrary goal, trip, project, or event. The autonomous agent breaks it into phased sub-tasks,
-        calculates critical path schedules, and generates an actionable master roadmap.
-    </div>
-    <div class="badge-container">
-        <span class="gemini-badge">⚡ ReAct Architecture</span>
-        <span class="gemini-badge">📋 Any Task / Universal Scope</span>
-        <span class="gemini-badge">🎯 Critical Path Analysis</span>
-        <span class="gemini-badge">🛡️ Contingency Safeguards</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    for p in plan.get("phases", []):
+        lines.append(f"### {p.get('phase_name')} ({CurrencyConverter.format(p.get('phase_budget', 0), curr)})")
+        lines.append(f"*{p.get('description', '')}*")
+        lines.append("")
+        for t in p.get("tasks", []):
+            cost_str = CurrencyConverter.format(t.get('estimated_cost', 0), curr)
+            lines.append(f"- [ ] **[{t.get('id')}] {t.get('title')}** — `{cost_str}` ({t.get('duration', 'N/A')})")
+            lines.append(f"  {t.get('details', '')}")
+        lines.append("")
 
+    if plan.get("key_tips"):
+        lines.append("## Practical Tips & Recommendations")
+        for tip in plan.get("key_tips", []):
+            lines.append(f"- {tip}")
 
-# Gemini Suggestion Chips
-col_chip1, col_chip2, col_chip3 = st.columns(3)
-with col_chip1:
-    if st.button("🌸 3-Day Trip to Tokyo ($1,200)", use_container_width=True):
-        st.session_state.prompt_fill = "Plan a 3-day cultural and culinary trip to Tokyo for 2 people with historic landmarks and food markets on a $1,200 budget"
+    return Response(
+        "\n".join(lines),
+        mimetype="text/markdown",
+        headers={"Content-Disposition": f"attachment;filename=plan_{session_id}.md"}
+    )
 
-with col_chip2:
-    if st.button("🚀 Build SaaS MVP in 4 Weeks", use_container_width=True):
-        st.session_state.prompt_fill = "Build and launch a SaaS AI MVP in 4 weeks with authentication and payment billing on a $2,000 budget"
-
-with col_chip3:
-    if st.button("🎓 Prepare AWS Exam in 30 Days", use_container_width=True):
-        st.session_state.prompt_fill = "Prepare for the AWS Solutions Architect exam in 30 days studying 2 hours daily with hands-on practice labs"
-
-
-col_chip4, col_chip5, col_chip6 = st.columns(3)
-with col_chip4:
-    if st.button("🏆 2-Day AI Hackathon (100 devs)", use_container_width=True):
-        st.session_state.prompt_fill = "Organize a 2-day technical AI hackathon for 100 participants in 3 weeks with a $1,500 prize pool"
-
-with col_chip5:
-    if st.button("🏡 Renovate Apartment ($5,000)", use_container_width=True):
-        st.session_state.prompt_fill = "Renovate and furnish a 2-bedroom apartment with a $5,000 budget in 2 weeks"
-
-with col_chip6:
-    if st.button("🏃 Train for Half-Marathon (10 wks)", use_container_width=True):
-        st.session_state.prompt_fill = "Train for a 21km half marathon in 10 weeks starting from a 5k baseline"
-
-st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
-
-
-# Main Goal Input Area
-default_val = st.session_state.get("prompt_fill", "")
-user_goal = st.text_area(
-    "Enter Your Goal or Task:",
-    value=default_val,
-    height=85,
-    placeholder="e.g. Plan a 3-day trip to Tokyo on a $1,200 budget, or launch a mobile app in 3 weeks..."
-)
-
-col_run, col_clear = st.columns([1, 5])
-with col_run:
-    execute_clicked = st.button("Plan Task ➔", use_container_width=True)
-
-if execute_clicked and user_goal.strip():
-    with st.spinner("Agentic ReAct Engine is decomposing goal, evaluating feasibility, and deriving schedule..."):
-        state = st.session_state.agent.run(user_goal.strip())
-        st.session_state.history.append((user_goal.strip(), state))
-        st.session_state.prompt_fill = ""
-
-
-# Render Generated Master Plans and Telemetry
-if st.session_state.history:
-    for goal_text, state in reversed(st.session_state.history):
-        p = state.structured_plan
-        c = state.parsed_constraints
-
-        st.markdown("<hr style='border: none; border-top: 1px solid #F1F5F9; margin: 30px 0;' />", unsafe_allow_html=True)
-        st.markdown(f"### 🎯 Goal: *\"{goal_text}\"*")
-
-        # Metric Ribbon in Red & White
-        b_str = f"${p.total_budget:,.2f}" if p and p.total_budget else "Flexible"
-        st.markdown(f"""
-        <div class="metric-row">
-            <div class="metric-box">
-                <div class="metric-box-label">Master Plan ID</div>
-                <div class="metric-box-val" style="color: #DC2626;">{p.plan_id if p else 'PLAN-001'}</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-box-label">Domain Category</div>
-                <div class="metric-box-val">{p.category if p else c.get('category')}</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-box-label">Timeline Target</div>
-                <div class="metric-box-val">{p.timeline_days if p else c.get('timeline_days')} Days</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-box-label">Estimated Effort</div>
-                <div class="metric-box-val">{p.estimated_hours:.0f} Hours</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-box-label">Budget Ceiling</div>
-                <div class="metric-box-val">{b_str}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Plan Overview & ReAct Telemetry in Two Columns
-        left_col, right_col = st.columns([3, 2])
-
-        with left_col:
-            st.markdown("<div class='plan-card'>", unsafe_allow_html=True)
-            st.markdown("### 📋 Master Execution Plan")
-            st.markdown(state.final_response)
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        with right_col:
-            st.markdown("### ⚡ Agentic Telemetry")
-            st.caption("Live ReAct Thought ➔ Action ➔ Observation trace")
-
-            for act in state.scratchpad:
-                st.markdown(f"""
-                <div class="telemetry-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span class="action-badge">Step #{act.step_num}: {act.action_name}</span>
-                        <span style="font-size: 0.75rem; color: #94A3B8;">{act.timestamp[11:19]}</span>
-                    </div>
-                    <div class="thought-text">🧠 <em>{act.thought}</em></div>
-                </div>
-                """, unsafe_allow_html=True)
-                with st.expander(f"View Observation #{act.step_num}", expanded=False):
-                    st.json(act.observation)
-else:
-    st.markdown("""
-    <div style="text-align: center; color: #94A3B8; padding: 40px 20px;">
-        💡 Click any suggestion chip above or type your own custom task to generate a master roadmap.
-    </div>
-    """, unsafe_allow_html=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    print(f"* Gemini Task Planner Agent running at http://localhost:{port}")
+    app.run(host="0.0.0.0", port=port, debug=False)

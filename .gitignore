@@ -1,14 +1,9 @@
-# Python & Environment
 __pycache__/
-*.py[cod]
-*$py.class
-*.env
+*.pyc
+*.pyo
+.env
 .venv/
 env/
-venv/
-
-# OS / Editor
 .DS_Store
-Thumbs.db
-.vscode/
-.idea/
+*.log
+scratch/

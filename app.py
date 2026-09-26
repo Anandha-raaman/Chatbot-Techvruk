@@ -68,9 +68,56 @@ def chat():
                 })
 
             session = active_sessions.get(session_id)
-            if session and session.get("current_plan") and not _is_new_plan_request(message):
+            current_plan = session.get("current_plan") if session else None
+
+            # Check if user is asking to switch or convert currency of the active plan
+            requested_currency_change = _detect_currency_change_intent(message)
+
+            if session and current_plan and requested_currency_change and not _is_explicit_new_goal(message):
+                target_curr = CurrencyConverter.normalize_currency_code(requested_currency_change)
+                old_curr = current_plan.get("currency", "USD")
+                sym = CurrencyConverter.get_symbol(target_curr)
+
+                q.put({
+                    "type": "thought",
+                    "content": f"Recalculating plan budget and task cost allocations from {old_curr} to {target_curr} ({sym})..."
+                })
+                time.sleep(0.3)
+
+                converted_plan = DynamicTaskPlanner.convert_plan_currency(current_plan, target_curr)
+                converted_plan["session_id"] = session_id
+                session["current_plan"] = converted_plan
+                if "plans" in session and session["plans"]:
+                    session["plans"][-1] = converted_plan
+                session["history"].append({"user": message, "plan": converted_plan})
+
+                fmt_total = CurrencyConverter.format(converted_plan.get('target_budget', 0), target_curr)
+                fmt_alloc = CurrencyConverter.format(converted_plan.get('allocated_cost', 0), target_curr)
+                fmt_res = CurrencyConverter.format(converted_plan.get('contingency_reserve', 0), target_curr)
+
+                # Emit updated plan to UI
+                q.put({
+                    "type": "plan",
+                    "data": converted_plan,
+                    "session_id": session_id
+                })
+
+                reply = (
+                    f"✦ All budget estimates and task costs for **{converted_plan.get('title')}** have been converted to **{target_curr} ({sym})**.\n\n"
+                    f"• **Target Budget:** {fmt_total} {target_curr}\n"
+                    f"• **Planned Expenses:** {fmt_alloc} {target_curr}\n"
+                    f"• **Emergency Buffer (12%):** {fmt_res} {target_curr}\n\n"
+                    f"The plan card above has been updated with verified {target_curr} allocations."
+                )
+                q.put({
+                    "type": "followup",
+                    "reply": reply,
+                    "session_id": session_id
+                })
+
+            elif session and current_plan and not _is_new_plan_request(message):
                 # Conversational follow-up
-                plan = session["current_plan"]
+                plan = current_plan
                 all_plans = session.get("plans", [plan])
                 q.put({
                     "type": "thought",
@@ -86,6 +133,7 @@ def chat():
             else:
                 # New plan generation (supports multiple plans in the same chat)
                 extracted_budget, detected_curr = DynamicTaskPlanner.extract_budget_and_currency(message)
+                sym = CurrencyConverter.get_symbol(detected_curr)
                 
                 # Stream human-friendly, clean thinking steps (NO code, NO technical tool schemas)
                 q.put({
@@ -96,7 +144,7 @@ def chat():
 
                 q.put({
                     "type": "thought",
-                    "content": f"Auditing financial allocation in {detected_curr} with a 12% contingency buffer..."
+                    "content": f"Auditing financial allocation in {detected_curr} ({sym}) with a 12% contingency buffer..."
                 })
                 time.sleep(0.3)
 
@@ -142,49 +190,99 @@ def chat():
 
     return Response(event_stream(), mimetype="text/event-stream")
 
-def _is_new_plan_request(msg: str) -> bool:
-    """Determines whether a message is requesting a new plan vs asking a conversational question."""
+def _detect_currency_change_intent(msg: str) -> Optional[str]:
+    """
+    Detects if the user wants to convert or view the current plan in a specific currency.
+    Examples:
+      - 'inr', 'indian rupees', 'rupees', 'change to inr', 'give in inr', 'i want in inr',
+        'convert to inr', 'show in inr', 'money est in inr', 'must come in inr'
+      - 'usd', 'dollars', 'change to usd', 'give in usd', 'i want in usd', 'convert to usd', 'show in usd'
+    """
+    if not msg:
+        return None
+    m = msg.strip().lower()
+
+    # Direct short message
+    if m in ["inr", "indian rupees", "indian rupee", "rupees", "rupee", "rs", "rs.", "₹"]:
+        return "INR"
+    if m in ["usd", "dollars", "dollar", "us dollars", "us dollar", "bucks", "$"]:
+        return "USD"
+    if m in ["eur", "euros", "euro", "€"]:
+        return "EUR"
+    if m in ["gbp", "pounds", "pound", "sterling", "£"]:
+        return "GBP"
+    if m in ["jpy", "yen", "¥"]:
+        return "JPY"
+
+    # Directional / intent patterns for INR
+    inr_patterns = [
+        r"\b(?:come\s+in|want\s+in|give\s+in|give\s+me\s+in|show\s+in|change\s+to|convert\s+to|switch\s+to|make\s+it|est\s+in|estimate\s+in|budget\s+in|cost\s+in|price\s+in|in|to|into|as)\s+(?:in\s+)?(?:indian\s+rupees?|inr|rupees?|rs\.?|₹)\b",
+        r"\b(?:must\s+come\s+in|only\s+in|want\s+it\s+in)\s+(?:inr|indian\s+rupees?|rupees?)\b",
+        r"\b(?:give|show|display|provide|format)\s+.*?(?:inr|indian\s+rupees?|rupees?)\b"
+    ]
+    for pat in inr_patterns:
+        if re.search(pat, m):
+            return "INR"
+
+    # Directional / intent patterns for USD
+    usd_patterns = [
+        r"\b(?:come\s+in|want\s+in|give\s+in|give\s+me\s+in|show\s+in|change\s+to|convert\s+to|switch\s+to|make\s+it|est\s+in|estimate\s+in|budget\s+in|cost\s+in|price\s+in|in|to|into|as)\s+(?:in\s+)?(?:us\s+dollars?|usd|dollars?|bucks|\$)\b",
+        r"\b(?:must\s+come\s+in|only\s+in|want\s+it\s+in)\s+(?:usd|dollars?|us\s+dollars?)\b",
+        r"\b(?:give|show|display|provide|format)\s+.*?(?:usd|dollars?|us\s+dollars?)\b"
+    ]
+    for pat in usd_patterns:
+        if re.search(pat, m):
+            return "USD"
+
+    # Other currencies
+    other = re.search(r"\b(?:change\s+to|convert\s+to|switch\s+to|show\s+in|give\s+in|in|to)\s+(eur|euros?|gbp|pounds?|jpy|yen|cad|aud|aed|sgd|chf|cny)\b", m)
+    if other:
+        return CurrencyConverter.normalize_currency_code(other.group(1))
+
+    return None
+
+def _is_explicit_new_goal(msg: str) -> bool:
+    """Checks whether the user explicitly asks to plan a new separate goal."""
     m = msg.lower().strip()
-    
-    # Explicit indicators of a new plan
-    plan_override = any(w in m for w in [
+    return any(w in m for w in [
         "another plan", "new plan", "also plan", "second plan", "next plan", 
         "different plan", "plan a", "plan my", "plan for", "plan to", "give me a plan",
         "plan another", "one more plan", "make a plan"
     ])
-    if plan_override:
+
+def _is_new_plan_request(msg: str) -> bool:
+    """Determines whether a message is requesting a new plan vs asking a conversational question or currency change."""
+    m = msg.lower().strip()
+
+    # If it's a currency change request on an existing plan, not a new plan
+    if _detect_currency_change_intent(m) and not _is_explicit_new_goal(m):
+        return False
+
+    # Explicit indicators of a new plan
+    if _is_explicit_new_goal(m):
         return True
 
-    # Pure conversational follow-up questions
+    # Conversational questions
     question_starters = (
         "why ", "why?", "how come", "what does", "who will", "which ",
-        "can you reduce", "can we cut", "can i reduce", "is it possible to save",
-        "explain", "tell me more about", "what do you mean", "details of"
+        "can you", "can we", "can i", "is it possible", "how much",
+        "explain", "tell me", "what do you", "details of", "where can",
+        "show me", "how to"
     )
     if m.startswith(question_starters):
         return False
 
-    # Check for general planning or task keywords
-    plan_words = [
-        "plan", "trip", "tour", "travel", "vacation", "itinerary", "visit",
-        "launch", "build", "create", "organize", "schedule", "roadmap", "routine",
-        "business", "bakery", "cafe", "app", "software", "saas", "mvp",
-        "event", "wedding", "conference", "party", "renovate", "prepare", "exam",
-        "workout", "fitness", "diet", "study", "trek"
-    ]
-    currency_words = [
-        "inr", "usd", "eur", "jpy", "gbp", "cad", "aud", "rupees", "dollars",
-        "₹", "$", "€", "¥", "£", "budget", "price", "cost"
-    ]
+    # Action + Subject for planning
+    plan_action_words = ["plan", "build", "launch", "create", "organize", "prepare", "schedule"]
+    has_action = any(w in m for w in plan_action_words)
+    has_subject = any(w in m for w in ["trip", "tour", "travel", "vacation", "app", "software", "mvp", "bakery", "cafe", "business", "wedding", "conference", "party", "exam", "diet", "trek"])
 
-    has_plan = any(w in m for w in plan_words)
-    has_curr = any(w in m for w in currency_words)
-
-    return has_plan or has_curr or len(m.split()) >= 3
+    return has_action and has_subject
 
 def _generate_followup_reply(query: str, plan: Dict[str, Any], all_plans: List[Dict[str, Any]], api_key: Optional[str]) -> str:
     """Generates intelligent conversational follow-ups using real-world LLM (Gemini or local models)."""
     curr = plan.get("currency", "USD")
+    sym = CurrencyConverter.get_symbol(curr)
 
     # Multi-plan context overview
     plans_context = "\n".join([f"- Plan {i+1}: {p.get('title')} (Budget: {p.get('target_budget')} {p.get('currency')})" for i, p in enumerate(all_plans)])
@@ -202,13 +300,13 @@ Plans in this chat:
 Active Plan Details:
 Title: {plan.get('title')}
 Summary: {plan.get('summary')}
-Budget: {plan.get('target_budget')} {curr}
+Budget: {plan.get('target_budget')} {curr} ({sym})
 Phases: {[p.get('phase_name') for p in plan.get('phases', [])]}
 
 User Question: "{query}"
 
-Answer concisely, helpfully, and practically. Do not reveal code, schemas, or technical implementation details. Keep the tone warm, clear, and professional."""
-            for g_model in ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash']:
+Answer concisely, helpfully, and practically. Important: The user's active plan is denominated in {curr} ({sym}). Ensure all financial references strictly use {curr}. Do not reveal code, schemas, or technical implementation details. Keep the tone warm, clear, and professional."""
+            for g_model in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest']:
                 try:
                     resp = client.models.generate_content(
                         model=g_model,

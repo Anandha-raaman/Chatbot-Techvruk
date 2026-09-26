@@ -22,78 +22,214 @@ class DynamicTaskPlanner:
     """
 
     @classmethod
+    def detect_currency(cls, text: str) -> str:
+        """
+        Detects whether user wants INR, USD, EUR, etc. from natural language.
+        Prioritizes directional phrases ('in inr', 'want in usd', 'to inr', 'in indian rupees', etc.)
+        and accurately recognizes symbols (₹, $), codes (INR, USD), and word forms ('indian rupees', 'rupees', 'dollars').
+        """
+        if not text:
+            return "USD"
+        
+        t = text.lower().strip()
+
+        # 1. High priority: directional intent ('to inr', 'in inr', 'in indian rupees', 'want in usd', 'must come in inr')
+        # Check target INR phrases
+        inr_target_patterns = [
+            r"\b(?:come\s+in|want\s+in|give\s+in|give\s+me\s+in|show\s+in|change\s+to|convert\s+to|switch\s+to|make\s+it|est\s+in|estimate\s+in|budget\s+in|cost\s+in|price\s+in|in|to|into|as)\s+(?:in\s+)?(?:indian\s+rupees?|inr|rupees?|rs\.?|₹)\b",
+            r"\b(?:must\s+come\s+in|only\s+in|want\s+it\s+in)\s+(?:inr|indian\s+rupees?|rupees?)\b",
+            r"\b(?:indian\s+rupees?|inr|rupees?)\s+(?:only|please|format)\b"
+        ]
+        for pat in inr_target_patterns:
+            if re.search(pat, t):
+                return "INR"
+
+        # Check target USD phrases
+        usd_target_patterns = [
+            r"\b(?:come\s+in|want\s+in|give\s+in|give\s+me\s+in|show\s+in|change\s+to|convert\s+to|switch\s+to|make\s+it|est\s+in|estimate\s+in|budget\s+in|cost\s+in|price\s+in|in|to|into|as)\s+(?:in\s+)?(?:us\s+dollars?|usd|dollars?|bucks|\$)\b",
+            r"\b(?:must\s+come\s+in|only\s+in|want\s+it\s+in)\s+(?:usd|dollars?|us\s+dollars?)\b"
+        ]
+        for pat in usd_target_patterns:
+            if re.search(pat, t):
+                return "USD"
+
+        # Check target for other currencies
+        other_target = re.search(
+            r"\b(?:come\s+in|want\s+in|give\s+in|show\s+in|change\s+to|convert\s+to|switch\s+to|in|to|into|as)\s+(eur|euros?|gbp|pounds?|jpy|yen|cad|aud|aed|dirhams?|sgd|chf|cny)\b",
+            t
+        )
+        if other_target:
+            return CurrencyConverter.normalize_currency_code(other_target.group(1))
+
+        # 2. Medium priority: Currency symbols
+        if "₹" in text:
+            return "INR"
+        if "$" in text and not any(sym in text for sym in ["C$", "A$", "NZ$", "HK$"]):
+            return "USD"
+        if "€" in text:
+            return "EUR"
+        if "£" in text:
+            return "GBP"
+        if "¥" in text:
+            return "JPY"
+
+        # 3. Explicit keyword mentions in text (when not in a 'from' context)
+        # Check INR keywords
+        has_inr = bool(re.search(r"\b(?:indian\s+rupees?|inr|rupees?|rs\.?)\b", t))
+        has_usd = bool(re.search(r"\b(?:us\s+dollars?|usd|dollars?|bucks)\b", t))
+
+        if has_inr and not has_usd:
+            return "INR"
+        if has_usd and not has_inr:
+            return "USD"
+        if has_inr and has_usd:
+            # If both are mentioned, inspect which one is the desired target
+            if re.search(r"(?:to|in|into|want|come\s+in)\s+.*?(?:inr|rupees?|indian\s+rupees?)", t):
+                return "INR"
+            if re.search(r"(?:to|in|into|want|come\s+in)\s+.*?(?:usd|dollars?)", t):
+                return "USD"
+            # Default to INR if INR is explicitly stated
+            return "INR"
+
+        # Check other currency keywords
+        other_curr = re.search(r"\b(eur|euros?|gbp|pounds?|jpy|yen|cad|aud|aed|dirhams?|sgd|chf|cny|krw)\b", t)
+        if other_curr:
+            return CurrencyConverter.normalize_currency_code(other_curr.group(1))
+
+        return "USD"
+
+    @classmethod
+    def _parse_amount_str(cls, raw: str) -> float:
+        """Converts strings like '20,000', '50k', '2.5 lakh', '1 crore' to float."""
+        clean = raw.lower().replace(",", "").strip()
+        if "lakh" in clean:
+            num = re.sub(r"[^\d.]", "", clean)
+            return float(num) * 100000.0 if num else 0.0
+        elif "crore" in clean:
+            num = re.sub(r"[^\d.]", "", clean)
+            return float(num) * 10000000.0 if num else 0.0
+        elif clean.endswith("k"):
+            num = re.sub(r"[^\d.]", "", clean[:-1])
+            return float(num) * 1000.0 if num else 0.0
+        else:
+            num = re.sub(r"[^\d.]", "", clean)
+            return float(num) if num else 0.0
+
+    @classmethod
     def extract_budget_and_currency(cls, text: str) -> Tuple[Optional[float], str]:
         """
         Silently parses user's natural language to detect budget and currency.
-        Examples: '20,000 INR', 'budget 2500 USD', 'under $1500', '₹30,000', '€2000', '50k inr'
-        Defaults to USD if no currency is mentioned.
+        Supports phrases like:
+          - 'plan a trip to goa in indian rupees' -> (None, 'INR')
+          - 'plan a trip with 50000 in indian rupees' -> (50000.0, 'INR')
+          - 'plan a 3-day trip with 20000 inr' -> (20000.0, 'INR')
+          - 'plan with ₹20,000' -> (20000.0, 'INR')
+          - 'give me money est in inr' -> (None, 'INR')
+          - 'i want in usd' -> (None, 'USD')
+          - 'budget: $2500' -> (2500.0, 'USD')
         """
-        # Currency symbol detection
-        sym_map = {
-            "₹": "INR", "$": "USD", "€": "EUR", "£": "GBP", "¥": "JPY",
-            "C$": "CAD", "A$": "AUD", "CHF": "CHF", "S$": "SGD", "AED": "AED"
-        }
-        for sym, code in sym_map.items():
-            pattern = re.escape(sym) + r"\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+k?)"
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                amt_str = match.group(1).lower().replace(",", "")
-                if amt_str.endswith("k"):
-                    amt = float(amt_str[:-1]) * 1000
-                else:
-                    amt = float(amt_str)
-                return amt, code
+        detected_curr = cls.detect_currency(text)
 
-        # Currency code detection (e.g. 20000 inr, 1500 usd, 50k eur, 3 lakh inr)
-        code_pattern = r"([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+k?|\d+\s*(?:lakh|crore))\s*(usd|inr|eur|gbp|jpy|cad|aud|chf|sgd|aed|cny|brl|krw|peso|rupees?|dollars?|euros?|pounds?|yen)"
-        match = re.search(code_pattern, text, re.IGNORECASE)
-        if match:
-            num_part = match.group(1).lower().replace(",", "").strip()
-            curr_part = match.group(2).lower().strip()
+        # 1. Symbol with number: ₹20,000 or $2,500 or €1500
+        sym_pattern = r"([₹$€£¥])\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+(?:\.\d+)?k|\d+(?:\.\d+)?\s*(?:lakh|crore))"
+        sym_match = re.search(sym_pattern, text, re.IGNORECASE)
+        if sym_match:
+            sym = sym_match.group(1)
+            amt = cls._parse_amount_str(sym_match.group(2))
+            sym_curr_map = {"₹": "INR", "$": "USD", "€": "EUR", "£": "GBP", "¥": "JPY"}
+            curr = sym_curr_map.get(sym, detected_curr)
+            return (amt, curr)
 
-            amt = 0.0
-            if "lakh" in num_part:
-                amt = float(re.sub(r"[^\d.]", "", num_part)) * 100000
-            elif "crore" in num_part:
-                amt = float(re.sub(r"[^\d.]", "", num_part)) * 10000000
-            elif num_part.endswith("k"):
-                amt = float(num_part[:-1]) * 1000
-            else:
-                amt = float(num_part)
+        # 2. Number followed by optional preposition and currency word:
+        # e.g. 50000 in indian rupees, 20000 inr, 20k rupees, 2500 usd, 3 lakh inr
+        num_curr_pat = r"([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+(?:\.\d+)?k|\d+(?:\.\d+)?\s*(?:lakh|crore))\s*(?:in|of|worth\s+of)?\s*(?:indian\s+)?(usd|inr|eur|gbp|jpy|cad|aud|chf|sgd|aed|cny|krw|rupees?|dollars?|euros?|pounds?|yen|bucks|rs\.?)\b"
+        nc_match = re.search(num_curr_pat, text, re.IGNORECASE)
+        if nc_match:
+            amt = cls._parse_amount_str(nc_match.group(1))
+            code = CurrencyConverter.normalize_currency_code(nc_match.group(2))
+            return (amt, code)
 
-            curr_map = {
-                "rupee": "INR", "rupees": "INR", "inr": "INR",
-                "dollar": "USD", "dollars": "USD", "usd": "USD",
-                "euro": "EUR", "euros": "EUR", "eur": "EUR",
-                "pound": "GBP", "pounds": "GBP", "gbp": "GBP",
-                "yen": "JPY", "jpy": "JPY",
-                "cad": "CAD", "aud": "AUD", "aed": "AED", "sgd": "SGD", "chf": "CHF"
-            }
-            return amt, curr_map.get(curr_part, "USD")
+        # 3. Currency word followed by optional preposition/colon and number:
+        # e.g. inr 20000, rupees: 50000, usd 2500, budget of inr 25000
+        curr_num_pat = r"\b(?:budget\s+(?:of|is|:)\s*)?(?:in\s+)?(usd|inr|eur|gbp|jpy|cad|aud|aed|rupees?|dollars?|rs\.?)\s*(?:of|is|:)?\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+(?:\.\d+)?k|\d+(?:\.\d+)?\s*(?:lakh|crore))\b"
+        cn_match = re.search(curr_num_pat, text, re.IGNORECASE)
+        if cn_match:
+            code = CurrencyConverter.normalize_currency_code(cn_match.group(1))
+            amt = cls._parse_amount_str(cn_match.group(2))
+            return (amt, code)
 
-        # Reversed order: "budget of inr 25000", "budget: $500"
-        rev_pattern = r"(usd|inr|eur|gbp|jpy|cad|aud|aed)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+k?)"
-        match_rev = re.search(rev_pattern, text, re.IGNORECASE)
-        if match_rev:
-            curr_code = match_rev.group(1).upper()
-            amt_str = match_rev.group(2).lower().replace(",", "")
-            amt = float(amt_str[:-1]) * 1000 if amt_str.endswith("k") else float(amt_str)
-            return amt, curr_code
-
-        # Standalone numbers with words like budget or cost
-        standalone = re.search(r"(?:budget|price|cost|under|around|within)\s*(?:of|is|:)?\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+k)", text, re.IGNORECASE)
+        # 4. Standalone budget keyword with number:
+        # e.g. budget 20000, cost: 50k, under 15000, within 2500
+        standalone_pat = r"(?:budget|price|cost|under|around|within|cap\s+of|ceiling\s+of)\s*(?:of|is|:)?\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+(?:\.\d+)?k|\d+(?:\.\d+)?\s*(?:lakh|crore))\b"
+        standalone = re.search(standalone_pat, text, re.IGNORECASE)
         if standalone:
-            amt_str = standalone.group(1).lower().replace(",", "")
-            amt = float(amt_str[:-1]) * 1000 if amt_str.endswith("k") else float(amt_str)
-            return amt, "USD"
+            amt = cls._parse_amount_str(standalone.group(1))
+            return (amt, detected_curr)
 
-        return None, "USD"
+        # 5. Standalone number when prompt specifies amount (excluding duration patterns like 3-day, 5 days)
+        clean_text = re.sub(r"\b\d+\s*[-/]?\s*(?:days?|weeks?|months?|years?|hours?|hrs?|nights?|stars?|persons?|people|pax)\b", "", text, flags=re.IGNORECASE)
+        with_num = re.search(r"\b(?:with|for|spend|save|totaling|around|about|limit)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+(?:\.\d+)?k|\d+(?:\.\d+)?\s*(?:lakh|crore))\b", clean_text, re.IGNORECASE)
+        if with_num:
+            amt = cls._parse_amount_str(with_num.group(1))
+            return (amt, detected_curr)
+
+        general_num = re.search(r"\b([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?|\d+(?:\.\d+)?k|\d+(?:\.\d+)?\s*(?:lakh|crore))\b", clean_text)
+        if general_num:
+            amt = cls._parse_amount_str(general_num.group(1))
+            if amt >= 100:  # Avoid single digit counts or dates being mistaken for budgets
+                return (amt, detected_curr)
+
+        return (None, detected_curr)
+
+    @classmethod
+    def convert_plan_currency(cls, plan: Dict[str, Any], target_currency: str) -> Dict[str, Any]:
+        """
+        Converts an existing plan's financial allocations to the target currency.
+        Updates target_budget, allocated_cost, contingency_reserve, phase budgets,
+        task estimated costs, and cost breakdown amounts.
+        """
+        target_curr = CurrencyConverter.normalize_currency_code(target_currency)
+        old_curr = CurrencyConverter.normalize_currency_code(plan.get("currency", "USD"))
+        
+        p = json.loads(json.dumps(plan))
+        if old_curr == target_curr:
+            p["currency"] = target_curr
+            return p
+
+        old_budget = float(p.get("target_budget", 0))
+        conv = CurrencyConverter.convert(old_budget, old_curr, target_curr)
+        new_budget = conv["converted_amount"]
+        ratio = (new_budget / old_budget) if old_budget > 0 else (conv["effective_rate"])
+
+        new_contingency = round(new_budget * 0.12, 2)
+        new_allocated = round(new_budget - new_contingency, 2)
+
+        p["target_budget"] = round(new_budget, 2)
+        p["currency"] = target_curr
+        p["contingency_reserve"] = new_contingency
+        p["allocated_cost"] = new_allocated
+
+        # Scale phases & subtasks
+        for phase in p.get("phases", []):
+            if "phase_budget" in phase:
+                phase["phase_budget"] = round(float(phase["phase_budget"]) * ratio, 2)
+            for task in phase.get("tasks", []):
+                if "estimated_cost" in task:
+                    task["estimated_cost"] = round(float(task["estimated_cost"]) * ratio, 2)
+
+        # Scale cost breakdown
+        for cat in p.get("cost_breakdown", []):
+            if "amount" in cat:
+                cat["amount"] = round(float(cat["amount"]) * ratio, 2)
+
+        return p
 
     @classmethod
     def generate_plan(cls, goal: str, api_key: Optional[str] = None) -> Dict[str, Any]:
         """
         Generates a specific, relevant, and comprehensive plan tailored to the user's exact request
-        using a real-world LLM (Google Gemini or Qwen 2.5 7B).
+        using a real-world LLM (Google Gemini or Qwen 2.5 7B), or rich contextual reasoning.
+        Guarantees that when the user requests INR or USD, all money estimations strictly follow that currency.
         """
         extracted_budget, currency = cls.extract_budget_and_currency(goal)
         currency = CurrencyConverter.normalize_currency_code(currency)
@@ -103,14 +239,18 @@ class DynamicTaskPlanner:
         if effective_key:
             ai_plan = cls._generate_with_gemini(goal, extracted_budget, currency, effective_key)
             if ai_plan:
+                if ai_plan.get("currency") != currency:
+                    ai_plan = cls.convert_plan_currency(ai_plan, currency)
                 return ai_plan
 
         # 2. Use real-world LLM: Qwen 2.5 7B
         qwen_plan = cls._generate_with_qwen(goal, extracted_budget, currency)
         if qwen_plan:
+            if qwen_plan.get("currency") != currency:
+                qwen_plan = cls.convert_plan_currency(qwen_plan, currency)
             return qwen_plan
 
-        # 3. Contextual Fallback
+        # 3. Contextual Fallback Engine
         return cls._generate_contextual_plan(goal, extracted_budget, currency)
 
     @classmethod
@@ -151,11 +291,11 @@ class DynamicTaskPlanner:
         try:
             import ollama
             import concurrent.futures
-            budget_hint = f"User specified budget: {budget} {currency}." if budget else f"Estimate a realistic budget in {currency}."
+            budget_hint = f"User specified budget: {CurrencyConverter.format(budget, currency)} {currency}." if budget else f"Estimate a realistic budget in {currency} ({CurrencyConverter.get_symbol(currency)})."
             prompt = f"""You are an elite, practical task planner assistant powered by a real-world LLM.
 User Goal: "{goal}"
 {budget_hint}
-Selected Currency: {currency}
+Selected Currency: {currency} (CRITICAL: Every single financial figure, target_budget, phase_budget, and task estimated_cost MUST strictly be calculated and expressed in {currency} {CurrencyConverter.get_symbol(currency)}. Do NOT return USD if {currency} is requested.)
 
 Create a highly specific, tailored, and actionable plan. Do NOT give generic advice. Tailor every task directly to the specific place, technology, business, or task mentioned.
 Allocate 10-15% of the total budget as an emergency contingency reserve.
@@ -215,6 +355,8 @@ Return ONLY a valid JSON object matching this schema, with no markdown code bloc
                         data = cls._clean_and_parse_json(content)
                         if data and "title" in data and "phases" in data:
                             data["generated_by"] = f"Local LLM ({model_name})"
+                            if data.get("currency") != currency or (currency == "INR" and float(data.get("target_budget", 0)) < 1000):
+                                data = cls.convert_plan_currency(data, currency)
                             return data
                 except Exception:
                     continue
@@ -230,12 +372,12 @@ Return ONLY a valid JSON object matching this schema, with no markdown code bloc
             import google.genai as genai
             client = genai.Client(api_key=api_key)
 
-            budget_text = f"Budget provided: {CurrencyConverter.format(budget, currency)}" if budget else f"No budget explicitly provided. Estimate a realistic budget in {currency}."
+            budget_text = f"Budget provided: {CurrencyConverter.format(budget, currency)} {currency}" if budget else f"No budget explicitly provided. You MUST estimate a realistic, complete budget in {currency} ({CurrencyConverter.get_symbol(currency)})."
 
             prompt = f"""You are an elite, practical task planner assistant.
 User Request: "{goal}"
 {budget_text}
-Selected Currency: {currency}
+Selected Currency: {currency} (CRITICAL: Every single financial figure, target_budget, phase_budget, and task estimated_cost MUST strictly be calculated and expressed in {currency} {CurrencyConverter.get_symbol(currency)}. Do NOT output in USD if {currency} is requested.)
 
 Create a highly specific, tailored, and actionable plan. Do NOT give generic advice. Tailor every task directly to the specific place, technology, business, or task mentioned.
 
@@ -275,7 +417,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
   ]
 }}"""
 
-            for gemini_model in ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash']:
+            for gemini_model in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest']:
                 try:
                     response = client.models.generate_content(
                         model=gemini_model,
@@ -284,6 +426,8 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
                     data = cls._clean_and_parse_json(response.text)
                     if data and "title" in data and "phases" in data:
                         data["generated_by"] = f"Google Gemini ({gemini_model})"
+                        if data.get("currency") != currency or (currency == "INR" and float(data.get("target_budget", 0)) < 1000):
+                            data = cls.convert_plan_currency(data, currency)
                         return data
                 except Exception:
                     continue
@@ -336,7 +480,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
         if "goa" in g:
             dest = "Goa"
             if not budget:
-                budget = 20000.0 if currency == "INR" else 250.0
+                budget = 20000.0 if currency == "INR" else (250.0 if currency == "USD" else CurrencyConverter.convert(250.0, "USD", currency)["converted_amount"])
             phases_data = [
                 {
                     "phase_name": "Day 1: North Goa Beaches & Vibrant Nightlife",
@@ -375,7 +519,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
         elif "tokyo" in g or "japan" in g:
             dest = "Tokyo"
             if not budget:
-                budget = 200000.0 if currency == "JPY" else 1500.0
+                budget = 200000.0 if currency == "JPY" else (130000.0 if currency == "INR" else (1500.0 if currency == "USD" else CurrencyConverter.convert(1500.0, "USD", currency)["converted_amount"]))
             phases_data = [
                 {
                     "phase_name": "Phase 1: Modern Tokyo (Shibuya, Shinjuku & Harajuku)",
@@ -416,7 +560,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
             dest_words = [w.capitalize() for w in goal.split() if w.lower() not in ["plan", "a", "trip", "to", "and", "with", "budget", "of", "in", "the", "for", "day", "days"]]
             dest = " ".join(dest_words[:2]) if dest_words else "Travel Journey"
             if not budget:
-                budget = 1500.0 if currency == "USD" else (100000.0 if currency == "INR" else 1200.0)
+                budget = 100000.0 if currency == "INR" else (1500.0 if currency == "USD" else CurrencyConverter.convert(1500.0, "USD", currency)["converted_amount"])
             phases_data = [
                 {
                     "phase_name": "Phase 1: Transit, Arrival & Neighborhood Orientation",
@@ -474,7 +618,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
         g = goal.lower()
         biz_name = "Bakery / Cafe" if ("bakery" in g or "cafe" in g or "coffee" in g) else "New Business Venture"
         if not budget:
-            budget = 300000.0 if currency == "INR" else 5000.0
+            budget = 400000.0 if currency == "INR" else (5000.0 if currency == "USD" else CurrencyConverter.convert(5000.0, "USD", currency)["converted_amount"])
 
         phases_data = [
             {
@@ -532,7 +676,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
     def _plan_software(cls, goal: str, budget: Optional[float], currency: str) -> Dict[str, Any]:
         """Software, MVP, or tech project plan."""
         if not budget:
-            budget = 3500.0 if currency == "USD" else 250000.0
+            budget = 300000.0 if currency == "INR" else (3500.0 if currency == "USD" else CurrencyConverter.convert(3500.0, "USD", currency)["converted_amount"])
 
         phases_data = [
             {
@@ -590,7 +734,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
     def _plan_event(cls, goal: str, budget: Optional[float], currency: str) -> Dict[str, Any]:
         """Event, wedding, or conference planning."""
         if not budget:
-            budget = 300000.0 if currency == "INR" else 4000.0
+            budget = 350000.0 if currency == "INR" else (4000.0 if currency == "USD" else CurrencyConverter.convert(4000.0, "USD", currency)["converted_amount"])
 
         phases_data = [
             {
@@ -648,7 +792,7 @@ Output JSON format strictly conforming to this schema (no markdown formatting, n
     def _plan_general(cls, goal: str, budget: Optional[float], currency: str) -> Dict[str, Any]:
         """Versatile, intelligent plan for any general goal, study plan, or routine."""
         if not budget:
-            budget = 1000.0 if currency == "USD" else 50000.0
+            budget = 85000.0 if currency == "INR" else (1000.0 if currency == "USD" else CurrencyConverter.convert(1000.0, "USD", currency)["converted_amount"])
 
         # Extract keywords
         clean_goal = re.sub(r"(?i)\b(plan|a|an|the|with|budget|of|in|for)\b", "", goal).strip()

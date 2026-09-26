@@ -77,9 +77,41 @@ class CurrencyConverter:
         }
         if currency_input.strip() in symbol_map:
             return symbol_map[currency_input.strip()]
+
+        # Check explicit aliases
+        alias_map = {
+            "INR": ["INR", "₹", "RS", "RS.", "RUPEE", "RUPEES", "INDIAN RUPEE", "INDIAN RUPEES", "INDIAN RS", "PAISE", "LAKH", "LAKHS", "CRORE", "CRORES"],
+            "USD": ["USD", "$", "DOLLAR", "DOLLARS", "US DOLLAR", "US DOLLARS", "BUCKS", "BUCK", "GREENBACK"],
+            "EUR": ["EUR", "€", "EURO", "EUROS"],
+            "GBP": ["GBP", "£", "POUND", "POUNDS", "STERLING", "BRITISH POUND", "BRITISH POUNDS"],
+            "JPY": ["JPY", "¥", "YEN", "JAPANESE YEN"],
+            "CAD": ["CAD", "C$", "CANADIAN DOLLAR", "CANADIAN DOLLARS"],
+            "AUD": ["AUD", "A$", "AUSTRALIAN DOLLAR", "AUSTRALIAN DOLLARS"],
+            "AED": ["AED", "DIRHAM", "DIRHAMS", "UAE DIRHAM", "EMIRATI DIRHAM"],
+            "SGD": ["SGD", "S$", "SINGAPORE DOLLAR", "SINGAPORE DOLLARS"],
+            "CHF": ["CHF", "SWISS FRANC", "SWISS FRANCS", "FRANC", "FRANCS"],
+            "CNY": ["CNY", "YUAN", "RMB", "CHINESE YUAN"],
+            "KRW": ["KRW", "₩", "WON", "KOREAN WON"],
+            "BRL": ["BRL", "R$", "REAL", "REAIS", "BRAZILIAN REAL"],
+            "MXN": ["MXN", "MEX$", "MEXICAN PESO", "PESO", "PESOS"],
+            "THB": ["THB", "฿", "BAHT", "THAI BAHT"],
+            "MYR": ["MYR", "RM", "RINGGIT", "MALAYSIAN RINGGIT"],
+            "SAR": ["SAR", "RIYAL", "RIYALS", "SAUDI RIYAL"],
+            "NZD": ["NZD", "NZ$", "NEW ZEALAND DOLLAR"],
+            "HKD": ["HKD", "HK$", "HONG KONG DOLLAR"],
+            "ZAR": ["ZAR", "RAND", "SOUTH AFRICAN RAND"],
+            "RUB": ["RUB", "₽", "RUBLE", "RUBLES", "RUSSIAN RUBLE"],
+            "TRY": ["TRY", "₺", "LIRA", "TURKISH LIRA"],
+        }
+        for code, aliases in alias_map.items():
+            if cleaned in aliases:
+                return code
+            for alias in aliases:
+                if len(alias) >= 3 and alias in cleaned.split():
+                    return code
         
         for code, info in cls.RATES.items():
-            if info["symbol"].upper() == cleaned or info["name"].upper() in cleaned:
+            if info["symbol"].upper() == cleaned or info["name"].upper() in cleaned or cleaned in info["name"].upper():
                 return code
         return "USD"
 

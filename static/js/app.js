@@ -519,7 +519,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (["JPY", "KRW", "VND", "IDR"].includes(curr)) {
       return Math.round(val).toLocaleString();
     }
-    return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const locale = curr === "INR" ? "en-IN" : undefined;
+    return val.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function escapeHtml(str) {

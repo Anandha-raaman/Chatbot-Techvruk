@@ -82,7 +82,7 @@ class TaskPlannerAgent:
         
         # Check if user mentioned currency or budget inside goal text as well
         extracted_budget, extracted_currency = self._extract_price_and_currency(goal)
-        user_currency = request.currency if request.currency and request.currency != "USD" else (extracted_currency or request.currency or "USD")
+        user_currency = extracted_currency if extracted_currency else (request.currency or "USD")
         user_currency = CurrencyConverter.normalize_currency_code(user_currency)
         
         target_budget = request.budget if request.budget > 0 else (extracted_budget or 0.0)
@@ -349,26 +349,9 @@ class TaskPlannerAgent:
         )
 
     def _extract_price_and_currency(self, text: str) -> (Optional[float], Optional[str]):
-        """Detects currency amounts like '$2500', '€4000', '₹50,000', '1500 USD', etc."""
-        # Pattern 1: Symbol before number (e.g. $2500, ₹50,000, €4,000)
-        sym_match = re.search(r'([$€£₹¥])\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)', text)
-        if sym_match:
-            symbol = sym_match.group(1)
-            amt_str = sym_match.group(2).replace(',', '')
-            return float(amt_str), symbol
-
-        # Pattern 2: Number before or after currency code (e.g. 2500 USD, 50000 INR, EUR 3000)
-        code_match = re.search(r'([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)\s*(USD|EUR|INR|GBP|JPY|CAD|AUD|CHF|CNY|SGD|AED|NZD|BRL)', text, re.IGNORECASE)
-        if code_match:
-            amt_str = code_match.group(1).replace(',', '')
-            return float(amt_str), code_match.group(2).upper()
-
-        code_match_rev = re.search(r'(USD|EUR|INR|GBP|JPY|CAD|AUD|CHF|CNY|SGD|AED|NZD|BRL)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)', text, re.IGNORECASE)
-        if code_match_rev:
-            amt_str = code_match_rev.group(2).replace(',', '')
-            return float(amt_str), code_match_rev.group(1).upper()
-
-        return None, None
+        """Detects currency and budget from text using DynamicTaskPlanner."""
+        from agent.dynamic_planner import DynamicTaskPlanner
+        return DynamicTaskPlanner.extract_budget_and_currency(text)
 
     def _contextualize_task(self, template_title: str, goal: str, category: str) -> str:
         # Enhances generic blueprint titles with user's specific context

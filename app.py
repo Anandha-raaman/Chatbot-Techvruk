@@ -26,11 +26,11 @@ app = Flask(__name__, static_folder=STATIC_DIR)
 # In-memory storage for active sessions & plans
 active_sessions = {}
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
     return send_from_directory(STATIC_DIR, "index.html")
 
-@app.route("/<path:path>")
+@app.route("/<path:path>", methods=["GET"])
 def static_proxy(path):
     target = os.path.join(STATIC_DIR, path)
     if os.path.exists(target) and os.path.isfile(target):
@@ -41,6 +41,7 @@ def static_proxy(path):
 @app.route("/chat", methods=["POST", "OPTIONS"])
 @app.route("/api/index", methods=["POST", "OPTIONS"])
 @app.route("/api", methods=["POST", "OPTIONS"])
+@app.route("/", methods=["POST", "OPTIONS"])
 def chat():
     """
     Main conversational endpoint.

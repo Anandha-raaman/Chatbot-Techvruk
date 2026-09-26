@@ -1,27 +1,47 @@
-"""
-Chatbot Techvruk - Autonomous AI Task Planner Web Application
-Clean, private, conversational system matching modern aesthetics.
-Handles natural language planning, background multi-currency parsing, and follow-up refinements.
-"""
-
 import os
-import re
-import json
-import time
-import uuid
-import queue
-import threading
-from dotenv import load_dotenv
-load_dotenv()
-
-from flask import Flask, request, jsonify, Response, send_from_directory
-from agent.dynamic_planner import DynamicTaskPlanner
-from agent.tools import CurrencyConverter
+import sys
+import traceback
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 STATIC_DIR = os.path.join(BASE_DIR, "public") if os.path.exists(os.path.join(BASE_DIR, "public")) else os.path.join(BASE_DIR, "static")
 
+startup_error = None
+try:
+    import re
+    import json
+    import time
+    import uuid
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    from flask import Flask, request, jsonify, Response, send_from_directory
+    from agent.dynamic_planner import DynamicTaskPlanner
+    from agent.tools import CurrencyConverter
+except Exception as e:
+    startup_error = traceback.format_exc()
+    from flask import Flask, request, jsonify, Response, send_from_directory
+
 app = Flask(__name__, static_folder=STATIC_DIR)
+handler = app
+
+class DebugMiddleware:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+    def __call__(self, environ, start_response):
+        if startup_error:
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [f"STARTUP CRASH:\n{startup_error}".encode('utf-8')]
+        try:
+            return self.wsgi_app(environ, start_response)
+        except Exception:
+            tb = traceback.format_exc()
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [f"RUNTIME CRASH:\n{tb}".encode('utf-8')]
+
+app.wsgi_app = DebugMiddleware(app.wsgi_app)
 
 # In-memory storage for active sessions & plans
 active_sessions = {}

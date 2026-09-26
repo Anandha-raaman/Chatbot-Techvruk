@@ -206,8 +206,36 @@ body {
   padding: 0 20px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
   flex-shrink: 0;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-new-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.topbar-new-chat-btn:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-hover);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 .menu-toggle-btn {

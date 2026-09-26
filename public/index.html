@@ -67,16 +67,25 @@
       
       <!-- Top Minimal Header -->
       <header class="gemini-top-bar">
-        <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Toggle sidebar">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-        <div class="gemini-brand">
-          <span class="brand-name">Chatbot Techvruk</span>
+        <div class="top-bar-left">
+          <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Toggle sidebar">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="gemini-brand" id="brandHomeBtn" style="cursor: pointer;" title="Start fresh plan">
+            <span class="brand-name">Chatbot Techvruk</span>
+          </div>
         </div>
+        <button class="topbar-new-chat-btn" id="topbarNewChatBtn" title="Start a new chat">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New chat</span>
+        </button>
       </header>
 
       <!-- Chat / Plan Scroll Container -->

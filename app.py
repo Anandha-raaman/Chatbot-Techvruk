@@ -60,6 +60,7 @@ def chat():
     message = data.get("message", "").strip()
     session_id = data.get("session_id") or str(uuid.uuid4())[:8]
     api_key = data.get("api_key") or os.environ.get("GEMINI_API_KEY")
+    client_plan = data.get("current_plan")
 
     if not message:
         return jsonify({"error": "Message cannot be empty"}), 400
@@ -79,6 +80,18 @@ def chat():
                 except Exception:
                     pass
                 yield f"data: {json.dumps({'type': 'thought', 'content': '✦ Google Gemini API Key recognized and saved! Switching directly to gemini-2.5-flash...'})}\n\n"
+
+            # Hydrate or initialize session (stateless across Vercel serverless functions)
+            if session_id not in active_sessions:
+                active_sessions[session_id] = {
+                    "history": [],
+                    "current_plan": client_plan,
+                    "plans": [client_plan] if client_plan else []
+                }
+            elif client_plan and not active_sessions[session_id].get("current_plan"):
+                active_sessions[session_id]["current_plan"] = client_plan
+                if client_plan not in active_sessions[session_id].get("plans", []):
+                    active_sessions[session_id].setdefault("plans", []).append(client_plan)
 
             session = active_sessions.get(session_id)
             current_plan = session.get("current_plan") if session else None
@@ -151,14 +164,15 @@ def chat():
 
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'message': f'Planning error: {str(e)}'})}\n\n"
+        finally:
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return Response(
         event_stream(),
         mimetype="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-transform",
             "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*"
         }
     )
@@ -279,7 +293,7 @@ Phases: {[p.get('phase_name') for p in plan.get('phases', [])]}
 User Question: "{query}"
 
 Answer concisely, helpfully, and practically. Important: The user's active plan is denominated in {curr} ({sym}). Ensure all financial references strictly use {curr}. Do not reveal code, schemas, or technical implementation details. Keep the tone warm, clear, and professional."""
-            for g_model in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest']:
+            for g_model in ['gemini-2.5-flash', 'gemini-2.0-flash']:
                 try:
                     resp = client.models.generate_content(
                         model=g_model,
@@ -288,12 +302,12 @@ Answer concisely, helpfully, and practically. Important: The user's active plan 
                     if resp and resp.text:
                         return resp.text.strip()
                 except Exception:
-                    continue
+                    break
         except Exception as e:
             print(f"[Gemini Followup Notice] {e}")
 
-    # 2. Use real-world local LLM (Qwen 2.5 7B or Gemma 3) via Ollama
-    for model_name in ['qwen2.5:7b', 'gemma3:270m']:
+    # 2. Use local LLM (Ollama) only if explicitly enabled
+    if os.environ.get("ENABLE_OLLAMA") == "1":
         try:
             import ollama
             prompt = f"""You are Gemini Task Planner assistant powered by a real-world LLM.
@@ -306,12 +320,12 @@ Phases: {[p.get('phase_name') for p in plan.get('phases', [])]}
 User Question: "{query}"
 
 Answer helpfully, practically, and specifically in 2-3 concise paragraphs. Do not mention code or technical schemas."""
-            resp = ollama.chat(model=model_name, messages=[{'role': 'user', 'content': prompt}], options={'temperature': 0.4})
+            resp = ollama.chat(model='qwen2.5:7b', messages=[{'role': 'user', 'content': prompt}], options={'temperature': 0.4})
             reply_text = resp['message']['content'].strip()
             if reply_text:
                 return reply_text
         except Exception:
-            continue
+            pass
 
     # Fallback contextual reply
     q_lower = query.lower()

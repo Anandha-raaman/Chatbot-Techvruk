@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const promptInput = document.getElementById("promptInput");
   const sendBtn = document.getElementById("sendBtn");
   const newChatBtn = document.getElementById("newChatBtn");
+  const topbarNewChatBtn = document.getElementById("topbarNewChatBtn");
+  const brandHomeBtn = document.getElementById("brandHomeBtn");
   const recentsList = document.getElementById("recentsList");
 
   // Sidebar & Theme
@@ -29,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // State
   let currentSessionId = generateSessionId();
+  let currentPlan = null;
   let userApiKey = localStorage.getItem("gemini_user_api_key") || "";
   let recentPlans = JSON.parse(localStorage.getItem("gemini_recent_plans") || "[]");
 
@@ -78,8 +81,10 @@ document.addEventListener("DOMContentLoaded", () => {
       settingsModal.close();
     });
 
-    // New Chat
+    // New Chat buttons
     newChatBtn.addEventListener("click", startNewChat);
+    if (topbarNewChatBtn) topbarNewChatBtn.addEventListener("click", startNewChat);
+    if (brandHomeBtn) brandHomeBtn.addEventListener("click", startNewChat);
 
     // Auto-resize textarea
     promptInput.addEventListener("input", function() {
@@ -109,14 +114,26 @@ document.addEventListener("DOMContentLoaded", () => {
     promptForm.addEventListener("submit", handleSubmit);
   }
 
+  function unlockInput() {
+    promptInput.disabled = false;
+    sendBtn.disabled = false;
+    setTimeout(() => {
+      promptInput.focus();
+    }, 50);
+  }
+
   function startNewChat() {
     currentSessionId = generateSessionId();
+    currentPlan = null;
     chatStream.innerHTML = "";
     chatStream.classList.add("hidden");
     heroView.classList.remove("hidden");
     promptInput.value = "";
     promptInput.style.height = "auto";
-    promptInput.focus();
+    unlockInput();
+    if (sidebar.classList.contains("open")) {
+      sidebar.classList.remove("open");
+    }
   }
 
   async function handleSubmit(e) {
@@ -145,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({
           message: message,
           session_id: currentSessionId,
+          current_plan: currentPlan,
           api_key: userApiKey || undefined
         })
       });
@@ -156,8 +174,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let isDone = false;
 
-      while (true) {
+      while (!isDone) {
         const { value, done } = await reader.read();
         if (done) break;
 
@@ -167,10 +186,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6);
+            const dataStr = line.slice(6).trim();
+            if (!dataStr) continue;
             try {
               const eventObj = JSON.parse(dataStr);
               handleChatEvent(eventObj, thinkingBox, contentCol);
+              if (eventObj.type === "done" || eventObj.type === "error") {
+                isDone = true;
+                break;
+              }
             } catch (err) {
               console.error("JSON parse error:", err);
             }
@@ -178,12 +202,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      try {
+        await reader.cancel();
+      } catch (_) {}
+
     } catch (err) {
       thinkingBox.innerHTML = `⚠️ Could not complete planning: ${err.message}. Please try again.`;
     } finally {
-      promptInput.disabled = false;
-      sendBtn.disabled = false;
-      promptInput.focus();
+      unlockInput();
     }
   }
 
@@ -191,15 +217,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (eventObj.type === "thought") {
       thinkingBox.innerHTML = `<span class="thinking-sparkle">✦</span> ${escapeHtml(eventObj.content)}`;
     } else if (eventObj.type === "plan") {
+      currentPlan = eventObj.data;
       // Remove thinking box once final plan is ready
       thinkingBox.remove();
       renderPlanCard(eventObj.data, contentCol);
       saveRecentPlan(eventObj.data);
+      unlockInput();
     } else if (eventObj.type === "followup") {
       thinkingBox.remove();
       renderFollowupText(eventObj.reply, contentCol);
+      unlockInput();
     } else if (eventObj.type === "error") {
       thinkingBox.innerHTML = `⚠️ ${escapeHtml(eventObj.message)}`;
+      unlockInput();
+    } else if (eventObj.type === "done") {
+      unlockInput();
     }
   }
 

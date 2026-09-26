@@ -2,7 +2,9 @@
 
 > **File:** `Techvruk_Agentic_System_Presentation.pptx`  
 > **Format:** 16:9 Widescreen | Modern Executive Slate Theme | Card-Structured Visual Hierarchy  
+> **Live App:** [chatbot-techvruk.vercel.app](https://chatbot-techvruk.vercel.app/)  
 > **Demo Video:** [Watch Video Walkthrough on Google Drive](https://drive.google.com/file/d/1et9eNJhL7IshKhn02RfaxsCkgChwers4/view?usp=sharing)  
+> **GitHub Repo:** [Anandha-raaman/Chatbot-Techvruk](https://github.com/Anandha-raaman/Chatbot-Techvruk)  
 
 ---
 

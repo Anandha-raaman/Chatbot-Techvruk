@@ -18,18 +18,24 @@ from flask import Flask, request, jsonify, Response, send_from_directory
 from agent.dynamic_planner import DynamicTaskPlanner
 from agent.tools import CurrencyConverter
 
-app = Flask(__name__, static_folder="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app = Flask(__name__, static_folder=STATIC_DIR)
 
 # In-memory storage for active sessions & plans
 active_sessions = {}
 
 @app.route("/")
 def index():
-    return send_from_directory("static", "index.html")
+    return send_from_directory(STATIC_DIR, "index.html")
 
 @app.route("/<path:path>")
 def static_proxy(path):
-    return send_from_directory("static", path)
+    target = os.path.join(STATIC_DIR, path)
+    if os.path.exists(target) and os.path.isfile(target):
+        return send_from_directory(STATIC_DIR, path)
+    return send_from_directory(STATIC_DIR, "index.html")
 
 @app.route("/api/chat", methods=["POST"])
 def chat():

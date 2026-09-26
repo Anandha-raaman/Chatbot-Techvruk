@@ -37,14 +37,23 @@ def static_proxy(path):
         return send_from_directory(STATIC_DIR, path)
     return send_from_directory(STATIC_DIR, "index.html")
 
-@app.route("/api/chat", methods=["POST"])
-@app.route("/chat", methods=["POST"])
+@app.route("/api/chat", methods=["POST", "OPTIONS"])
+@app.route("/chat", methods=["POST", "OPTIONS"])
+@app.route("/api/index", methods=["POST", "OPTIONS"])
+@app.route("/api", methods=["POST", "OPTIONS"])
 def chat():
     """
     Main conversational endpoint.
     Accepts natural language user input, automatically detects any task, budget,
     and currency in the background, and streams clean thinking and plan delivery.
     """
+    if request.method == "OPTIONS":
+        res = Response()
+        res.headers["Access-Control-Allow-Origin"] = "*"
+        res.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        res.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return res, 204
+
     data = request.get_json(silent=True) or {}
     message = data.get("message", "").strip()
     session_id = data.get("session_id") or str(uuid.uuid4())[:8]
@@ -147,7 +156,8 @@ def chat():
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
-            "Connection": "keep-alive"
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*"
         }
     )
 

@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 
 # Ensure repository root is on sys.path for Vercel serverless environment
@@ -7,3 +7,4 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 from app import app
+handler = app
